@@ -1,0 +1,37 @@
+#include "scene.h"
+#include <pthread.h>
+pthread_mutex_t mutex1=PTHREAD_MUTEX_INITIALIZER;
+
+void RenderImage::PutPixel(int index, Color24 color,float zbuf)
+    {
+        img[index]=color;
+        zbuffer[index] = zbuf;
+        //std::cout<<"zbuf: "<<index<<std::endl;
+        pthread_mutex_lock(&mutex1);
+        IncrementNumRenderPixel(1);
+        pthread_mutex_unlock(&mutex1);
+    }
+
+	void	ComputeZBufferImage()
+	{
+		int size = width * height;
+		if (zbuffer8) delete [] zbuffer8;
+		zbuffer8 = new unsigned char[size];
+        
+		float zmin=BIGFLOAT, zmax=0;
+		for ( int i=0; i<size; i++ ) {
+			if ( zbuffer[i] == BIGFLOAT ) continue;
+			if ( zmin > zbuffer[i] ) zmin = zbuffer[i];
+			if ( zmax < zbuffer[i] ) zmax = zbuffer[i];
+		}
+		for ( int i=0; i<size; i++ ) {
+			if ( zbuffer[i] == BIGFLOAT ) zbuffer8[i] = 0;
+			else {
+				float f = (zmax-zbuffer[i])/(zmax-zmin);
+				int c = int(f * 255);
+				if ( c < 0 ) f = 0;
+				if ( c > 255 ) f = 255;
+				zbuffer8[i] = c;
+			}
+		}
+	}

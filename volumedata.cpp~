@@ -1,0 +1,36 @@
+#include "volumedata.h"
+
+bool LoadVolumeData(const char* filename, int xdim, int ydim, int zdim, unsigned short* data)
+{
+
+  FILE *pFile;
+  const int size = xdim*ydim*zdim;
+  
+  pFile = fopen(filename, "rb");
+  if(NULL == pFile)
+    {
+      return false;
+    }
+  unsigned short *pVolume = new unsigned short[size];
+  fread(pVolume,sizeof(unsigned short),size,pFile);
+  fclose(pFile);
+  int max = 0,min = 999999;
+  for(int i=0; i<xdim; i++)
+    for(int j=0; j < ydim; j++)
+      for(int k=0; k < zdim; k++)
+	{
+	  {
+	    {
+	      if( pVolume[i] > max ) max = pVolume[i];
+	      if( pVolume[i] < min ) min = pVolume[i];
+	    }
+	  }
+	}
+  std::cout << "Max: "<< max <<  std::endl;
+  std::cout << "Min: "<< min <<  std::endl;
+
+
+  data = pVolume;
+  return true;
+
+}
