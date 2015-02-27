@@ -19,7 +19,7 @@ using namespace std;
 #define BIAS_SHADOW 1e-4f
 #define BIAS_SHADING 0.001f
 #define _USE_MATH_DEFINES
-#define NUM_THREADS  1
+#define NUM_THREADS  4
 
 struct RenderParams{
     Point3 K;
@@ -242,11 +242,12 @@ void doRender(void* arg){
                 
                 if(RayTrace_2(r, hitInfo)) {
                     pixelHit=true;
-		    if(hitInfo.volume) //Volume is hit...ray march
+		    if(hitInfo.volume &&  hitInfo.renderIsoSurface == false) //Volume is hit AND not shading surface then use color
 		      {
 			shade = hitInfo.shade;
 		      }
-		    else{
+		    else{ //might render ISO surface
+		      //if(hitInfo.renderIsoSurface) std::cout<<"shading iso"<<std::endl;
 		        shade = hitInfo.node->GetMaterial()->Shade(r, hitInfo, lights, 5);
 		    }
                 }
@@ -398,7 +399,8 @@ Color MtlBlinn::Shade(const Ray &ray, const HitInfo &hInfo, const LightList &lig
         /* finally add inta*cola + intall*costheta*(cold + s* colS)*/
         shade = ambComponent  + allOther;
     }
-    
+
+    return shade; //testing -- no need reflection or refraction now    
     /* Calculate refraction */
     if(refraction.Grey()>0 && bounceCount>0){
         Color reflShade = Color(0,0,0);
@@ -658,37 +660,19 @@ bool RayTrace(HitInfo &hitInfo, Node* curnode, Ray ray, int PixIndex)
 int main(int argc, char* argv[])
 {
   //  int xdim = 400, ydim = 296, zdim = 352; //walnut
-  int xdim = 512, ydim = 512, zdim = 134; // Pig.raw
+  //  int xdim = 512, ydim = 512, zdim = 134; char* datafile="Pig.raw";// Pig.raw
+    int xdim = 512,ydim=512,zdim=63; char* datafile = "Teddy_512x512x63.raw";//teddy
+  //  int xdim = 256,ydim=256,zdim=161; char* datafile = "Tooth_256x256x161.raw";//tooth
     const char* filename = "scene.xml";
     unsigned short* volumeData = NULL;
     LoadScene(filename);
-    if(    LoadVolumeData("Pig.raw", xdim, ydim, zdim, &volumeData) )
+    if(    LoadVolumeData(datafile, xdim, ydim, zdim, &volumeData) )
       {
-
-	/*
-int index = 0;
-    for(int z=0; z < zdim; z++)
-      {
-	for(int y = 0; y < ydim; y++)
-	  {
-	    for(int x = 0; x < xdim; x++)
-	      {
-		//		DataPoints[x][y][z] =(int) theData[index];
-		std::cout<< volumeData[index]<<std::endl;
-		index++;
-	      }
-	  }
-	
-      }
-	*/
-	//pass to the box object
-	/*	unsigned short testData[3 * 3 * 3] = {1,0,0,0,0,1,1,1,1,
-					      1,0,0,0,0,1,1,1,1,
-					      1,0,0,0,0,1,1,1,1
-					      };*/
 	theBoxObject.SetDimensions(xdim, ydim, zdim);
       	theBoxObject.SetData(volumeData);
+	theBoxObject.CalculateGradients();
 	theBoxObject.CreateCells();
+	//	BeginRender();
       }
     else{
       std::cout<<"Failure to load data file"<<std::endl;
@@ -697,7 +681,7 @@ int index = 0;
 
     glutInit(&argc,argv);
     ShowViewport();
-    
+   
    tp.destroy_threadpool();
 	return 0;
 }

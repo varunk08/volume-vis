@@ -136,9 +136,9 @@ struct HitInfo
 	bool front;			// true if the ray hits the front side, false if the ray hits the back side
   Color shade;
   bool volume;
-
+  bool renderIsoSurface;
 	HitInfo() { Init(); }
-  void Init() { z=BIGFLOAT; node=NULL; front=true; volume=false; shade=Color(0.0, 255.0, 0.0);}
+  void Init() { z=BIGFLOAT; node=NULL; front=true; volume=false; shade=Color(0.0, 255.0, 0.0); renderIsoSurface=false;}
 };
 
 //-------------------------------------------------------------------------------

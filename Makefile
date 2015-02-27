@@ -2,7 +2,7 @@ CC:= g++
 OBJS:= main.o scene.o threadpool.o viewport.o xmlload.o tinyxml.o tinystr.o tinyxmlparser.o tinyxmlerror.o volumedata.o
 INCLUDES:= -I ./tinyxml/ -I .
 LDFLAGS:= -std=c++11 -stdlib=libc++  -framework Carbon -framework OpenGL -framework GLUT
-CXXFLAGS:= -std=c++11  -Wall -c ${INCLDUES}
+CXXFLAGS:= -std=c++11  -Wall -c ${INCLDUES} -g
 
 all: ${OBJS} 
 	${CC} ${LDFLAGS} $^ -o raytracer

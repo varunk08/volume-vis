@@ -13,7 +13,7 @@
 using namespace std;
 typedef struct
 {
-  vector <vector <int> > Indices;
+  vector <Point3> Indices;
 } Cell;
 
 class BoxObject : public Object
@@ -22,8 +22,11 @@ class BoxObject : public Object
   Point3 pmin;
   Point3 pmax;
   int xdim, ydim, zdim, _size;
+  int n_cells_x,n_cells_y,n_cells_z;
   //Corner points data
   vector< vector<vector <Point3> > > CornerLocations;
+  //gradients
+  vector< vector<vector <Point3> > > GradientDiffs;
   //Data points
   vector< vector<vector <int> > > DataPoints;
   //Cells
@@ -108,13 +111,14 @@ class BoxObject : public Object
     //    std::cout<<DataPoints[0][0][0]<<std::endl;
 
   }
+
   void CreateCells()
   {
     std::cout<<"Creating cells ..."<<std::endl;
     int ix = 0, iy = 0, iz= 0;
-    int n_cells_x = xdim - 1;
-    int n_cells_y = ydim - 1;
-    int n_cells_z = zdim - 1;
+    n_cells_x = xdim - 1;
+    n_cells_y = ydim - 1;
+    n_cells_z = zdim - 1;
     Cells.resize(n_cells_x);
     for(int i = 0; i < n_cells_x; i++)
       {
@@ -123,7 +127,8 @@ class BoxObject : public Object
 	  Cells[i][j].resize(n_cells_z);
       }
 
-    unsigned int ncells = 0; unsigned int totalCells = n_cells_x * n_cells_y * n_cells_z;
+
+
     for(int z = 0; z < n_cells_z; z++)
       {
 	iy=0;
@@ -133,51 +138,28 @@ class BoxObject : public Object
 	    for(int x = 0; x < n_cells_x; x++)
 	      {
 		Cell c;
-		c.Indices.resize(8);
-		for(int i = 0; i< 8;i++)
+				c.Indices.resize(8);
+	      /*for(int i = 0; i< 8;i++)
 		  {
 		    c.Indices[i].resize(3);
 		  }
-
-	       	c.Indices[0] = {ix,iy,iz};
-		c.Indices[1] = {ix+1,iy,iz};
-		c.Indices[2] = {ix,iy+1,iz};
-		c.Indices[3] = {ix+1,iy+1,iz};
-		c.Indices[4] = {ix+1,iy,iz+1};
-		c.Indices[5] = {ix,iy,iz+1};
-		c.Indices[6] = {ix,iy+1,iz+1};
-		c.Indices[7] = {ix+1,iy+1,iz+1};
+		*/
+				c.Indices[0] = Point3(ix,iy,iz);
+				c.Indices[1] = Point3(ix+1,iy,iz);
+				c.Indices[2] = Point3(ix,iy+1,iz);
+				c.Indices[3] = Point3(ix+1,iy+1,iz);
+				c.Indices[4] = Point3(ix+1,iy,iz+1);
+				c.Indices[5] = Point3(ix,iy,iz+1);
+				c.Indices[6] = Point3(ix,iy+1,iz+1);
+				c.Indices[7] = Point3(ix+1,iy+1,iz+1);
 		Cells[x][y][z] = c;
 		ix++;
-		//ncells++;
-		
-		//		std::cout<<"Progress: " <<ncells<<"/"<<totalCells<<"\r";
-		//	        std::cout.flush();
+
 	      }
 	    iy++;
 	  }
 	iz++;
       }
-    std::cout<<std::endl;
-    std::cout<<Cells[0][0].size()<<std::endl;;
-    std::cout<<"Test:\n"<<std::endl;
-		Cell c = Cells[0][0][0];
-				  Point3 corners[8];
-				  corners[0] = Point3(CornerLocations[c.Indices[0][0]][c.Indices[0][1]][c.Indices[0][2]]);
-				  corners[1] = Point3(CornerLocations[c.Indices[1][0]][c.Indices[1][1]][c.Indices[1][2]]);
-				  corners[2] = Point3(CornerLocations[c.Indices[2][0]][c.Indices[2][1]][c.Indices[2][2]]);
-				  corners[3] = Point3(CornerLocations[c.Indices[3][0]][c.Indices[3][1]][c.Indices[3][2]]);
-				  corners[4] = Point3(CornerLocations[c.Indices[4][0]][c.Indices[4][1]][c.Indices[4][2]]);
-				  corners[5] = Point3(CornerLocations[c.Indices[5][0]][c.Indices[5][1]][c.Indices[5][2]]);
-				  corners[6] = Point3(CornerLocations[c.Indices[6][0]][c.Indices[6][1]][c.Indices[6][2]]);
-				  corners[7] = Point3(CornerLocations[c.Indices[7][0]][c.Indices[7][1]][c.Indices[7][2]]);
-				  //       for(int i = 0; i < 8; i++)
-				  //        {
-				  //	  std::cout<<corners[i].x<<" "<<corners[i].y<<" "<<corners[i].z<<std::endl;
-				  //	}
-       //       std::cout<<CornerLocations.size()<<std::endl;
-       //       std::cout<<CornerLocations[0].size()<<std::endl;
-       //       std::cout<<CornerLocations[0][0].size()<<std::endl;
   }
   bool IntersectRay(const Ray &ray, HitInfo &hInfo, int hitSide=HIT_FRONT ) const
   {
@@ -238,7 +220,7 @@ class BoxObject : public Object
 		 }
 	       }
 	       bool noData = false;
-	       hInfo.shade=RayMarch(ray, hitZ[st], hitZ[end], noData);
+	       hInfo.shade=RayMarch(ray, hInfo, hitZ[st], hitZ[end], noData);
 	       if(!noData) {
 	       //hInfo.p = hitZ[ci].p;
 	       //hInfo.N = hitZ[ci].N;
@@ -247,14 +229,12 @@ class BoxObject : public Object
 	       //hInfo.z = hitZ[ci].z;
 	       hInfo.front =  true;
 	       }
-	       else boxHit = false;
+	       else boxHit = false; //no data (or) iso surface rendering
 	 }
-    //create 12 triangles with the corners of the box
-    //do intersection testing with all the triangles and get correct normal for correct shading
 
     return boxHit;
   }
-  Color RayMarch(const Ray& ray, HitInfo& start, HitInfo& end, bool &noData) const
+  Color RayMarch(const Ray& ray, HitInfo &hInfo, HitInfo& start, HitInfo& end, bool &noData) const
   {
     Color shade = Color(125,125,0);
     float length = (float)end.z - start.z;
@@ -269,55 +249,188 @@ class BoxObject : public Object
     r.p = start.p;
     r.dir = end.p - start.p;
     r.Normalize();
-    float dt = dist / (2.0); //testing
-    //get the first sample only for now -- testing
-    Point3 sample = start.p + dt * r.dir;
-    //bin x
-    int cx,cy,cz;
-	    for(int x =0; x < xdim  -1; x++)
-	      {
-		Cell c = Cells[x][0][0];
-		if( CornerLocations[c.Indices[0][0]][c.Indices[0][1]][c.Indices[0][2]].x < sample.x && CornerLocations[c.Indices[7][0]][c.Indices[7][1]][c.Indices[7][2]].x > sample.x)
-		  {
-		    cx = x;
-		  } 
-	      }
-	    for(int y =0; y < ydim -1; y++)
-	      {
-		Cell c = Cells[0][y][0];
-		if( CornerLocations[c.Indices[0][0]][c.Indices[0][1]][c.Indices[0][2]].y < sample.y && CornerLocations[c.Indices[7][0]][c.Indices[7][1]][c.Indices[7][2]].y > sample.y)
-		  {
-		    cy = y;
-		  } 
-
-	      }
-	    for(int z = 0; z < zdim -1; z++)
-	      {
-		Cell c = Cells[0][0][z];
-		if( CornerLocations[c.Indices[0][0]][c.Indices[0][1]][c.Indices[0][2]].z < sample.z && CornerLocations[c.Indices[7][0]][c.Indices[7][1]][c.Indices[7][2]].z > sample.z)
-		  {
-		    cz = z;
-		  } 
-	      }
-    Cell tc = Cells[cx][cy][cz];
-    //average the datapoints
-    float data_tot = 0;
-    //for(int i =0; i<8; i++)
+    float dt = (float)dist / (n_cells_x * 2.0); 
+    float t =0;
+    Point3 sample;
+    while ( t < dist )
       {
-    std::cout<<cx<<","<<cy<<","<<cz<< " Data: "<<std::endl;
-	data_tot = DataPoints[tc.Indices[0][0]][tc.Indices[0][1]][tc.Indices[0][2]];
+	sample = start.p + t * r.dir;
+	int cx=-1,cy=-1,cz=-1;
+	for(int x =0; x < n_cells_x; x++)
+	  {
+	    Cell c = Cells[x][0][0];
+	    if( CornerLocations[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z].x < sample.x && CornerLocations[c.Indices[7].x][c.Indices[7].y][c.Indices[7].z].x > sample.x)
+	      {
+		cx = x;
+		break;
+	      } 
+	  }
+	for(int y =0; y < n_cells_y; y++)
+	  {
+	    Cell c = Cells[0][y][0];
+	    if( CornerLocations[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z].y < sample.y && CornerLocations[c.Indices[7].x][c.Indices[7].y][c.Indices[7].z].y > sample.y)
+	      {
+		cy = y;
+		break;
+	      } 
+	    
+	  }
+	for(int z = 0; z < n_cells_z; z++)
+	  {
+	    Cell c = Cells[0][0][z];
+	    if( CornerLocations[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z].z < sample.z && CornerLocations[c.Indices[7].x][c.Indices[7].y][c.Indices[7].z].z > sample.z)
+	      {
+		cz = z;
+		break;
+	      } 
+	  }
+	if(cx >=0 && cx < n_cells_x && cy >=0 && cy < n_cells_y && cz >=0 && cz <n_cells_z )
+	  {
+      	     //    std::cout<<"chosen: "<<cx<<" " <<cy<<" " <<cz<< std::endl;
+	    float data_tot = 0;
+	    data_tot = TrilinearInterpolate(sample,cx,cy,cz);//SampleCell(cx,cy,cz);
+	    
+	    float THRESHOLD = 11000;
+	    if(data_tot > THRESHOLD) //ISo surface rendering
+	      {
+		//	 std::cout<<"Data: "<<data_tot<<std::endl;
+		hInfo.p = sample;;
+		hInfo.N = EstimateGradient(cx,cy,cz);
+		hInfo.z += t;
+		hInfo.renderIsoSurface = true;
+		
+		return shade;
+	      }
+	  }	
+	t += dt;
+	
+      }//while loop
+    
+    
+    noData = true; //didnt find any data that meets the condition
+    //    shade = Color(data_tot, data_tot, data_tot);
+    
+    return shade;
+    
+  }
+  float TrilinearInterpolate(Point3 samplePt, int x, int y, int z) const
+  {
+    Cell c = Cells[x][y][z];
+    float data = 0;
+    float xd, yd, zd;
+    float c01, c23, c45, c67;
+    float c0,c1;
+    float val;
+    Point3 p1 =  CornerLocations[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z];
+    Point3 p2 = CornerLocations[c.Indices[7].x][c.Indices[7].y][c.Indices[7].z];
+    float* v = new float[8];
+    for(int i = 0; i < 8; i++)
+      v[i] = DataPoints[c.Indices[i].x][c.Indices[i].y][c.Indices[i].z];
+
+    xd = (samplePt.x - p1.x)/(p2.x - p1.x);
+    yd = (samplePt.y - p1.y)/(p2.y - p1.y);
+    zd = (samplePt.z - p1.z)/(p2.z - p1.z);
+    c01 = v[0] * (1 - xd) + v[1] * xd;
+    c23 = v[2] * (1 - xd) + v[3] * xd;
+    c45 = v[4] * (1 - xd) + v[5] * xd;
+    c67 = v[6] * (1 - xd) + v[7] * xd;
+    c0 = c01 * (1 - yd) + c45 * yd;
+    c1 = c23 * (1 - yd) + c67 * yd;
+    val = c0 * (1 - zd) + c1 * zd;
+
+    delete[] v;
+    return val;
+  }
+  void CalculateGradients()
+  {
+    std::cout<<"Calculating Gradient differences ..."<<std::endl;
+    GradientDiffs.resize(xdim);
+    for(int i = 0; i < xdim; i++)
+      {
+	GradientDiffs[i].resize(ydim);
+	for(int j = 0; j < ydim; j++)
+	  GradientDiffs[i][j].resize(zdim);
       }
 
-      //data_tot /= 8;
+    for (int z = 0; z < zdim; z++)
+      {
+	for(int y=0;y<ydim;y++)
+	  {
+	    for(int x=0; x<xdim;x++)
+	      {
+		float xn, xp, yn, yp, zn, zp;
+		if(x > 0) xp = DataPoints[x-1][y][z];
+		else xp=0;
+		if(x < xdim-1) xn = DataPoints[x+1][y][z];
+		else xn = 0;
+		if(y > 0) yp = DataPoints[x][y-1][z];
+		else  yp = 0;
+		if(y < ydim-1) yn = DataPoints[x][y+1][z];
+		else yn = 0;
+		if(z > 0) zp = DataPoints[x][y][z-1];
+		else zp=0;
+		if(z < zdim-1) zn = DataPoints[x][y][z+1];
+		else zn = 0;
+		Point3 N =  Point3(xn - xp, yn - yp, zn - zp);
+		N.Normalize();
+		GradientDiffs[x][y][z] = N;
 
-    data_tot /= 1000;
-    //    if( data_tot <= 500 ) noData = true;
-    noData = false;
-    shade = Color(data_tot, data_tot, data_tot);
-    return shade;
+	      }
+	  }
+      }
 
-  } 
+    std::cout<<"Smoothing out ..."<<std::endl;
+    for (int z = 0; z < zdim; z++)
+      {
+	for(int y=0;y<ydim;y++)
+	  {
+	    for(int x=0; x<xdim;x++)
+	      {
+		Point3 xn, xp, yn, yp, zn, zp;
+		if(x > 0) xp = GradientDiffs[x-1][y][z];
+		else xp= Point3(0,0,0);
+		if(x < xdim-1) xn = GradientDiffs[x+1][y][z];
+		else xn = Point3(0,0,0);
+		if(y > 0) yp = GradientDiffs[x][y-1][z];
+		else  yp = Point3(0,0,0);
+		if(y < ydim-1) yn = GradientDiffs[x][y+1][z];
+		else yn = Point3(0,0,0);
+		if(z > 0) zp = GradientDiffs[x][y][z-1];
+		else zp= Point3(0,0,0);
+		if(z < zdim-1) zn = GradientDiffs[x][y][z+1];
+		else zn = Point3(0,0,0);
 
+		Point3 N = xn + xp + yn + yp + zn + zp;
+		N /= 6.0;
+		if(N.x != 0 && N.y!=0 && N.z!=0) N.Normalize();
+		GradientDiffs[x][y][z] = N;
+
+	      }
+	  }
+      }
+  }
+  //samples value of first data point for now -- testing
+  //will have to rewrite sample cell - estimate gradients needs a simple version but others require an interpolated version.
+  float SampleCell(int x, int y, int z) const
+  {
+    Cell c = Cells[x][y][z];
+    //       std::cout<<"sample: "<<x<<" "<<y<<" "<<z<<std::endl;
+    return DataPoints[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z];
+  }
+  Point3 EstimateGradient(int x, int y, int z) const
+  {
+    Cell c = Cells[x][y][z];
+    Point3 grad = Point3(0,0,0);
+    for(int i = 0; i< 8; i++)
+      {
+	grad += GradientDiffs[c.Indices[i].x][c.Indices[i].y][c.Indices[i].z];
+      }
+    grad/=8.0;
+    if(grad.x != 0 && grad.y!= 0 && grad.z!=0)
+      grad.Normalize();
+    return grad;
+    
+  }
   bool Box_IntersectTriangle(const Ray &ray, HitInfo &hInfo, Point3 p1, Point3 p2, Point3 p3, bool raymarch=false) const
   {
     //Based on Shirley's book
@@ -371,87 +484,6 @@ class BoxObject : public Object
 
     
     return true;
-    /*
-    Point3 A, B, C, N, P, D, H;
-    float bias = 1e-6f;
-    float t, a, a1, a2, alpha, beta;
-    Point2 A2d, B2d, C2d, H2d;
-
-
-    P = ray.p;
-    D = ray.dir;
-    Point3 nTemp = (B-A).Cross(C-A);
-    nTemp.Normalize();
-    N = nTemp;
-    
-    if(N.Dot(P-A) < bias) return false;
-    if(N.Dot(D) == 0) return false;
-    t = N.Dot(P-A)/ -(N.Dot(D));
-
-  if( t < hInfo.z && t >= bias && t < BIGFLOAT ) 
-    {
-      H = P + t * D;
-      int projAxis = 0;
-            if(abs(H.x) > abs(H.y)){
-                if(abs(H.x) > abs(H.z)){
-                    projAxis = 0;
-                }
-                else{
-                    projAxis = 2;
-                }
-            }
-            else if(abs(H.y) > abs(H.z)){
-                projAxis = 1;
-            }
-            else{
-                projAxis = 2;
-            }
-            //cout<<projAxis<<endl;
-            switch (projAxis) {
-                case 0: 
-                    A2d = Point2(A.y, A.z);
-                    B2d = Point2(B.y, B.z);
-                    C2d = Point2(C.y, C.z);
-                    H2d = Point2(H.y, H.z);
-                    break;
-                case 1:// project onto the y-axis
-                    A2d = Point2(A.x, A.z);
-                    B2d = Point2(B.x, B.z);
-                    C2d = Point2(C.x, C.z);
-                    H2d = Point2(H.x, H.z);
-                    break;
-                case 2:// project onto the z-axis
-                    A2d = Point2(A.x, A.y);
-                    B2d = Point2(B.x, B.y);
-                    C2d = Point2(C.x, C.y);
-                    H2d = Point2(H.x, H.y);
-                default:
-                    break;
-            }
-            
-            a = (B2d - A2d).Cross(C2d - A2d)/ 2.0;
-            a1 = (B2d - A2d).Cross(H2d - A2d)/ 2.0;
-            a2 = (H2d - A2d).Cross(C2d - A2d)/ 2.0;
-            alpha = a1/a;
-            beta = a2/a;
-            if(alpha < -bias || beta < -bias || alpha + beta > 1+bias){
-                return false; // point H is outside triangle
-            }
-            float b0 = 1 - beta - alpha;
-            float b1 = beta;
-            float b2 = alpha;
-            H = b0 * A + b1 * B + b2 * C;
-
-	    hInfo.front = true;
-	    hInfo.p = H;
-	    hInfo.N = N;
-	    hInfo.z = t;
-
-	    return true;
-	    
-    }
-  return false;
-    */
   }
 bool IsInside(const Point3 &p) const { for ( int i=0; i<3; i++ ) if ( pmin[i] > p[i] || pmax[i] < p[i] ) return false; return true; }
   void ViewportDisplay() const

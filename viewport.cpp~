@@ -100,7 +100,7 @@ void ShowViewport()
     else glutInitWindowPosition( 50, 50 );
     glutInitWindowSize(camera.imgWidth, camera.imgHeight);
     
-    glutCreateWindow("Ray Tracer - CS 6620");
+    glutCreateWindow("Ray Tracer - Volume Visualization");
     glutDisplayFunc(GlutDisplay);
     glutReshapeFunc(GlutReshape);
     glutIdleFunc(GlutIdle);
@@ -191,7 +191,7 @@ void DrawScene(bool capture=false)
     glDisable( GL_LIGHTING );
     
     if ( capture ) {
-        glReadPixels( 0, 0, camera.imgWidth, camera.imgHeight, GL_RGB, GL_UNSIGNED_BYTE, renderImage.GetPixels() );
+       glReadPixels( 0, 0, camera.imgWidth, camera.imgHeight, GL_RGB, GL_UNSIGNED_BYTE, renderImage.GetPixels() );
     }
 }
 
@@ -232,7 +232,7 @@ void GlutDisplay()
             break;
         case VIEWMODE_IMAGE:
             glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
-            glDrawPixels( renderImage.GetWidth(), renderImage.GetHeight(), GL_RGB, GL_UNSIGNED_BYTE, renderImage.GetPixels() );
+	    glDrawPixels( renderImage.GetWidth(), renderImage.GetHeight(), GL_RGB, GL_UNSIGNED_BYTE, renderImage.GetPixels() );
             DrawProgressBar();
             break;
         case VIEWMODE_Z:
@@ -266,8 +266,8 @@ void GlutIdle()
                 printf("Render Complete");
                 
                 renderImage.ComputeZBufferImage();
-                renderImage.SaveZImage("/Users/varunk/Desktop/RayTracerProj1/RayTracePrj6/RayTracePrj6/zbuffer.ppm");
-                renderImage.SaveImage("/Users/varunk/Desktop/RayTracerProj1/RayTracePrj6/RayTracePrj6/renderimage.ppm");
+                renderImage.SaveZImage("zbuffer.ppm");
+                renderImage.SaveImage("renderimage.ppm");
             }
             glutPostRedisplay();
         }
