@@ -242,7 +242,7 @@ void doRender(void* arg){
                 
                 if(RayTrace_2(r, hitInfo)) {
                     pixelHit=true;
-		    if(hitInfo.volume &&  hitInfo.renderIsoSurface == false) //Volume is hit AND not shading surface then use color
+		    if(hitInfo.volume)// &&  hitInfo.renderIsoSurface == false) //Volume is hit AND not shading surface then use color
 		      {
 			shade = hitInfo.shade;
 		      }
@@ -661,7 +661,7 @@ int main(int argc, char* argv[])
 {
   //  int xdim = 400, ydim = 296, zdim = 352; //walnut
   //  int xdim = 512, ydim = 512, zdim = 134; char* datafile="Pig.raw";// Pig.raw
-    int xdim = 512,ydim=512,zdim=63; char* datafile = "Teddy_512x512x63.raw";//teddy
+      int xdim = 512,ydim=512,zdim=63; char* datafile = "Teddy_512x512x63.raw";//teddy
   //  int xdim = 256,ydim=256,zdim=161; char* datafile = "Tooth_256x256x161.raw";//tooth
     const char* filename = "scene.xml";
     unsigned short* volumeData = NULL;

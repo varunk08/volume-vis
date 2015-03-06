@@ -100,7 +100,9 @@ class BoxObject : public Object
 	  {
 	    for(int x = 0; x < xdim; x++)
 	      {
-		DataPoints[x][y][z] =(int) theData[index];
+		//		DataPoints[x][y][z] =(int) theData[index];
+		DataPoints[x][y][z] =(int) theData[ (z * ydim + y) * xdim + x];
+		//(z * dim.y + y) * dim.x + x;
 		//		std::cout<<"DataPoints["<<x<<"]["<<y<<"]["<<z<<"]: "<<theData[index]<<std::endl;
 		index++;
 	      }
@@ -249,7 +251,7 @@ class BoxObject : public Object
     r.p = start.p;
     r.dir = end.p - start.p;
     r.Normalize();
-    float dt = (float)dist / (n_cells_x * 2.0); 
+    float dt = (float)1.0 / (n_cells_x * 2.0); 
     float t =0;
     Point3 sample;
     while ( t < dist )
@@ -284,21 +286,21 @@ class BoxObject : public Object
 		break;
 	      } 
 	  }
-	if(cx >=0 && cx < n_cells_x && cy >=0 && cy < n_cells_y && cz >=0 && cz <n_cells_z )
+	if(cx >=0 && cy >=0 && cz >=0 )
 	  {
       	     //    std::cout<<"chosen: "<<cx<<" " <<cy<<" " <<cz<< std::endl;
-	    float data_tot = 0;
-	    data_tot = TrilinearInterpolate(sample,cx,cy,cz);//SampleCell(cx,cy,cz);
+	    float data_tot = TrilinearInterpolate(sample,cx,cy,cz);//SampleCell(cx,cy,cz);
 	    
-	    float THRESHOLD = 11000;
+	    float THRESHOLD = 10500;
 	    if(data_tot > THRESHOLD) //ISo surface rendering
 	      {
 		//	 std::cout<<"Data: "<<data_tot<<std::endl;
-		hInfo.p = sample;;
+		hInfo.p = sample;
 		hInfo.N = EstimateGradient(cx,cy,cz);
 		hInfo.z += t;
 		hInfo.renderIsoSurface = true;
-		
+		shade = Color(t,t,t);
+		//		std::cout<<"hinfo z: "<<hInfo.z<<std::endl;
 		return shade;
 	      }
 	  }	
@@ -372,13 +374,13 @@ class BoxObject : public Object
 		if(z < zdim-1) zn = DataPoints[x][y][z+1];
 		else zn = 0;
 		Point3 N =  Point3(xn - xp, yn - yp, zn - zp);
-		N.Normalize();
+		//N.Normalize();
 		GradientDiffs[x][y][z] = N;
 
 	      }
 	  }
       }
-
+    /*
     std::cout<<"Smoothing out ..."<<std::endl;
     for (int z = 0; z < zdim; z++)
       {
@@ -408,6 +410,7 @@ class BoxObject : public Object
 	      }
 	  }
       }
+    */
   }
   //samples value of first data point for now -- testing
   //will have to rewrite sample cell - estimate gradients needs a simple version but others require an interpolated version.
@@ -424,8 +427,9 @@ class BoxObject : public Object
     for(int i = 0; i< 8; i++)
       {
 	grad += GradientDiffs[c.Indices[i].x][c.Indices[i].y][c.Indices[i].z];
+	//grad = GradientDiffs[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z];
       }
-    grad/=8.0;
+    grad.x /= -8.0; grad.y /= -8.0; grad.z /= -8.0;
     if(grad.x != 0 && grad.y!= 0 && grad.z!=0)
       grad.Normalize();
     return grad;
