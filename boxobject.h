@@ -226,7 +226,7 @@ class BoxObject : public Object
 	       if(!noData) {
 	       //hInfo.p = hitZ[ci].p;
 	       //hInfo.N = hitZ[ci].N;
-	       hInfo.volume = true;
+		 hInfo.volume = false;
 	       //hInfo.node = hitZ[ci].node;
 	       //hInfo.z = hitZ[ci].z;
 	       hInfo.front =  true;
@@ -291,7 +291,7 @@ class BoxObject : public Object
       	     //    std::cout<<"chosen: "<<cx<<" " <<cy<<" " <<cz<< std::endl;
 	    float data_tot = TrilinearInterpolate(sample,cx,cy,cz);//SampleCell(cx,cy,cz);
 	    
-	    float THRESHOLD = 10500;
+	    float THRESHOLD = 13000;
 	    if(data_tot > THRESHOLD) //ISo surface rendering
 	      {
 		//	 std::cout<<"Data: "<<data_tot<<std::endl;

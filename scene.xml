@@ -31,11 +31,11 @@
         </object>
 
 <object type="boxobject" name="volume-box" material="wallRed">
-<!--<scale value="5"/>-->
+<scale value="5"/>
 <rotate angle="90" z="1"/>
-<rotate angle="-10" x="1"/>
+<rotate angle="-90" x="1"/>
 <rotate angle="90" y="-1"/>
-<translate y="0"  z="5" />
+<translate y="0"  z="-40" />
 </object>
 
 <!--      <object type="obj" name="teapot_hi.obj" material="mtl1">
