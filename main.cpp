@@ -664,7 +664,8 @@ int main(int argc, char* argv[])
   //  int xdim = 512, ydim = 512, zdim = 134; char* datafile="Pig.raw";// Pig.raw
   //      int xdim = 512,ydim=512,zdim=63; char* datafile = "Teddy_512x512x63.raw";//teddy
   //  int xdim = 256,ydim=256,zdim=161; char* datafile = "Tooth_256x256x161.raw";//tooth
-  int xdim = 256,ydim=256,zdim=512; char* datafile = "Carp_256x256x512.raw";//Carp
+  //  int xdim = 256,ydim=256,zdim=512; char* datafile = "Carp_256x256x512.raw";//Carp
+  int xdim = 512, ydim=512,zdim=106; char* datafile = "Cadhead_512x512x106.raw";//Cad head
     const char* filename = "scene.xml";
     unsigned short* volumeData = NULL;
     LoadScene(filename);
