@@ -20,7 +20,7 @@
 #include <math.h>
 #include <pthread.h>
 #include <vector>
-
+#include "utils.h"
 #include "cyPoint.h"
 typedef cyPoint2f Point2;
 typedef cyPoint3f Point3;
@@ -38,14 +38,14 @@ typedef unsigned char uchar;
 //pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 //-------------------------------------------------------------------------------
 
-#ifndef min
+/*#ifndef min
 # define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
 #ifndef max
 # define max(a,b) ((a)>(b)?(a):(b))
 #endif
-
+*/
 #define BIGFLOAT 1.0e30f
 
 //-------------------------------------------------------------------------------
@@ -136,9 +136,9 @@ struct HitInfo
 	bool front;			// true if the ray hits the front side, false if the ray hits the back side
   Color shade;
   bool volume;
-
+  bool renderIsoSurface;
 	HitInfo() { Init(); }
-  void Init() { z=BIGFLOAT; node=NULL; front=true; volume=false; shade=Color(0.0, 255.0, 0.0);}
+  void Init() { z=BIGFLOAT; node=NULL; front=true; volume=false; shade=Color(0.0, 255.0, 0.0); renderIsoSurface=false;}
 };
 
 //-------------------------------------------------------------------------------

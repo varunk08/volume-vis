@@ -7,6 +7,5 @@
 #include "scene.h"
 
 void ShowViewport();
-void GlutKeyboard(unsigned char key, int x, int y);
 
 #endif

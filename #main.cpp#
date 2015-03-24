@@ -325,8 +325,8 @@ bool Box::IntersectRay(const Ray &ray, float t_max) const
         float tx1 = (xl - ray.p.x)/ ray.dir.x;
         float tx2 = (xh - ray.p.x)/ ray.dir.x;
         
-        tmin = utils::max((float)tmin,(float) utils::min((float)tx1,tx2));
-        tmax = utils::min((float)tmax,(float) utils::max((float)tx1, tx2));
+        tmin = max((float)tmin,(float) min((float)tx1,tx2));
+        tmax = min((float)tmax,(float) max((float)tx1, tx2));
     }
     //Check intersection for Y planes
     if(r.p.y != 0.0){
@@ -674,8 +674,7 @@ int main(int argc, char* argv[])
       	theBoxObject.SetData(volumeData);
 	theBoxObject.CalculateGradients();
 	theBoxObject.CreateCells();
-	BeginRender();
-	//	GlutKeyboard(' ', 0, 0);
+	//	BeginRender();
       }
     else{
       std::cout<<"Failure to load data file"<<std::endl;

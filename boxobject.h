@@ -243,7 +243,7 @@ class BoxObject : public Object
     //    std::cout<<start.p.x<<" " <<start.p.y<<" "<<start.p.z<<std::endl;
     //    std::cout<<end.p.x<<" " <<end.p.y<<" "<<end.p.z<<std::endl;
     //    std::cout<<end.z<<" "<<start.z<<" " << std::endl;
-    float dist = sqrt(pow(end.p.x - start.p.x, 2.0) + pow(end.p.y - start.p.y, 2.0) + pow(end.p.z - start.p.z,  2.0));
+    float dist = sqrt(std::pow((float)end.p.x - start.p.x, 2.0f) + pow((float)end.p.y - start.p.y, 2.0f) + pow((float)end.p.z - start.p.z,  2.0f));
     shade = Color (dist/10, dist/10, 0.0);
 
     //we know the ray. start the binning process- find which cell the current sample point is in, get the data points and average the color

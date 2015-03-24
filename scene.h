@@ -20,7 +20,7 @@
 #include <math.h>
 #include <pthread.h>
 #include <vector>
-
+#include "utils.h"
 #include "cyPoint.h"
 typedef cyPoint2f Point2;
 typedef cyPoint3f Point3;
@@ -38,14 +38,14 @@ typedef unsigned char uchar;
 //pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
 //-------------------------------------------------------------------------------
 
-#ifndef min
+/*#ifndef min
 # define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
 #ifndef max
 # define max(a,b) ((a)>(b)?(a):(b))
 #endif
-
+*/
 #define BIGFLOAT 1.0e30f
 
 //-------------------------------------------------------------------------------
@@ -311,7 +311,7 @@ public:
 		if ( n > 0 ) nc = new Node*[n];
 		for ( int i=0; i<n; i++ ) nc[i] = NULL;
 		if ( keepOld ) {
-			int sn = min(n,numChild);
+		  int sn = utils::min(n,numChild);
 			for ( int i=0; i<sn; i++ ) nc[i] = child[i];
 		}
 		if ( child ) delete [] child;

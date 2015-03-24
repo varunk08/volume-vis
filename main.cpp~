@@ -1,6 +1,7 @@
 #include "tinyxml/tinyxml.h"
 #include <GLUT/GLUT.h>
 #include "viewport.h"
+#include "utils.h"
 #include "scene.h"
 #include "xmlload.h"
 #include <iostream>
@@ -324,8 +325,8 @@ bool Box::IntersectRay(const Ray &ray, float t_max) const
         float tx1 = (xl - ray.p.x)/ ray.dir.x;
         float tx2 = (xh - ray.p.x)/ ray.dir.x;
         
-        tmin = max(tmin, min(tx1,tx2));
-        tmax = min(tmax, max(tx1, tx2));
+        tmin = utils::max((float)tmin,(float) utils::min((float)tx1,tx2));
+        tmax = utils::min((float)tmax,(float) utils::max((float)tx1, tx2));
     }
     //Check intersection for Y planes
     if(r.p.y != 0.0){
@@ -390,7 +391,7 @@ Color MtlBlinn::Shade(const Ray &ray, const HitInfo &hInfo, const LightList &lig
             float alpha = mb->glossiness;
             Point3 N = hInfo.N;
             float S = H.Dot(N);
-            S = pow(S,alpha);
+            S = pow((float)S,alpha);
             float costheta = L.Dot(N)/(L.Length() * N.Length());
             Color intensity = lights[i]->Illuminate(P);
 //            cout<<"costheta "<<endl;
@@ -661,8 +662,9 @@ int main(int argc, char* argv[])
 {
   //  int xdim = 400, ydim = 296, zdim = 352; //walnut
   //  int xdim = 512, ydim = 512, zdim = 134; char* datafile="Pig.raw";// Pig.raw
-      int xdim = 512,ydim=512,zdim=63; char* datafile = "Teddy_512x512x63.raw";//teddy
+  //      int xdim = 512,ydim=512,zdim=63; char* datafile = "Teddy_512x512x63.raw";//teddy
   //  int xdim = 256,ydim=256,zdim=161; char* datafile = "Tooth_256x256x161.raw";//tooth
+  int xdim = 256,ydim=256,zdim=512; char* datafile = "Carp_256x256x512.raw";//Carp
     const char* filename = "scene.xml";
     unsigned short* volumeData = NULL;
     LoadScene(filename);
@@ -673,6 +675,7 @@ int main(int argc, char* argv[])
 	theBoxObject.CalculateGradients();
 	theBoxObject.CreateCells();
 	//	BeginRender();
+	GlutKeyboard(' ', 0, 0);
       }
     else{
       std::cout<<"Failure to load data file"<<std::endl;

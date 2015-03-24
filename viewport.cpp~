@@ -255,6 +255,7 @@ void GlutIdle()
         if ( lastRenderedPixels != nrp ) {
             lastRenderedPixels = nrp;
             if ( renderImage.IsRenderDone() ) {
+	      printf("Render done");
                 mode = MODE_RENDER_DONE;
                 int endTime = (int) time(NULL);
                 int t = endTime - startTime;

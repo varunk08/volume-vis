@@ -86,7 +86,7 @@ static int      startTime;                      // Start time of rendering
 void GlutDisplay();
 void GlutReshape(int w, int h);
 void GlutIdle();
-void GlutKeyboard(unsigned char key, int x, int y);
+
 void GlutMouse(int button, int state, int x, int y);
 
 //-------------------------------------------------------------------------------
