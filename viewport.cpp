@@ -267,8 +267,8 @@ void GlutIdle()
                 printf("Render Complete");
                 
                 renderImage.ComputeZBufferImage();
-                renderImage.SaveZImage("zbuffer.ppm");
-                renderImage.SaveImage("renderimage.ppm");
+                renderImage.SaveZImage("images/zbuffer.ppm");
+                renderImage.SaveImage("images/renderimage.ppm");
             }
             glutPostRedisplay();
         }
