@@ -117,7 +117,7 @@ void ShowViewport()
     glEnable(GL_NORMALIZE);
     
     glLineWidth(2);
-    
+    GlutKeyboard(' ', 0, 0);
     glutMainLoop();
 }
 
@@ -286,6 +286,7 @@ void GlutKeyboard(unsigned char key, int x, int y)
         case ' ':
             switch ( mode ) {
                 case MODE_READY:
+		  printf("Mode ready. Begin render..\n");
                     mode = MODE_RENDERING;
                     viewMode = VIEWMODE_IMAGE;
                     DrawScene(true);

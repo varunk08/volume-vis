@@ -118,62 +118,12 @@ void PopulateImageParams()
 }
 void BeginRender()
 {
-    //Load ImageParams
+  std::cout<<"Beginning Render.."<<std::endl;
     imageParams.NUM_PIXELS = camera.imgHeight * camera.imgWidth;
     PopulateImageParams();
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  /*  for(int i = 0; i< camera.imgHeight ; i++){
-        for(int j = 0; j< camera.imgWidth; j++){
-            HitInfo hitInfo;
-            hitInfo.Init();
-            int PixIndex = i * camera.imgWidth + j;
-            Point2 pixLoc = imageParams.PixLocation.at(PixIndex);
-            Ray r = imageParams.Ray.at(PixIndex);
-            bool pixelHit = false;
-            Color shade(255,255,255);
-
-            if(rootNode.GetNumChild()>0){
-                
-                if(RayTrace_2(r, hitInfo)) {
-                    pixelHit=true;
-                    shade = hitInfo.node->GetMaterial()->Shade(r, hitInfo, lights, 5);
-                }
-                
-                renderImage.PutPixel(PixIndex, shade, hitInfo.z);
-                
-                
-            }
-            
-            if(!pixelHit){
-                
-                renderImage.PutPixel(PixIndex, black, BIGFLOAT);
-                
-            }
-
-            
-        }
-    }
-   
-    int threadError;
-    cout<<"Creating threads"<<endl;
-    for(int i=0; i<NUM_THREADS; i++){
-        args[i] = giveMeAPixelToRender();
-        if(args[i].renderComplete != 1){
-            threadError = pthread_create(&threadID[i],&attr,&doRender,&args[i]);
-            cout<<"Thread ID: "<<threadID[i]<<endl;
-            if(threadError != 0){
-                cout<<"THREAD ERROR..."<<i<<endl;
-            }
-            
-        }
-    }
-    for(int i =0;i<NUM_THREADS;i++){
-        pthread_join(threadID[i], NULL);
-    }
-    
-*/
     
     int ret = tp.initialize_threadpool();
     if (ret == -1) {
@@ -188,18 +138,10 @@ void BeginRender()
         x->ray = imageParams.Ray.at(i);
 
         Task* t = new Task(&doRender, (void*) x);
-        //    cout << "Adding to pool, task " << i+1 << endl;
         tp.add_task(t);
-//            cout << "Added to pool, task " << i+1 << endl;
     }
-    
     //usleep(20);
-    
-    
     }
-
-    
-    
 }
 RenderParams giveMeAPixelToRender()
 {
@@ -209,7 +151,7 @@ RenderParams giveMeAPixelToRender()
     int i =0;
     for ( i = 0; i<imageParams.NUM_PIXELS; i++) {
         if(imageParams.rendered[i] != 1){
-            //rParams.K = imageParams.K.at(i);
+	            //rParams.K = imageParams.K.at(i);
             rParams.pixIndex = imageParams.PixIndex.at(i);
             rParams.pixLocation = imageParams.PixLocation.at(i);
             rParams.ray = imageParams.Ray.at(i);
@@ -228,51 +170,33 @@ RenderParams giveMeAPixelToRender()
 void doRender(void* arg){
     
     RenderParams rarg = *((RenderParams *)arg);
-    //cout<<"Do render...."<<endl;
-            bool pixelHit=false;
-
+    std::cout<<"Rendering pixel..."<<std::endl;
+    bool pixelHit=false;
+    HitInfo hitInfo;
+    hitInfo.Init();
+    Point2 pixLoc = rarg.pixLocation;
+    Ray r = rarg.ray;
+    int PixIndex = rarg.pixIndex;
+    Color shade(255,255,255);
+    if(rootNode.GetNumChild()>0){
+      if(RayTrace_2(r, hitInfo)) {
+	pixelHit=true;
+	if(hitInfo.volume)// &&  hitInfo.renderIsoSurface == false) //Volume is hit AND not shading surface then use color
+	  {
+	    shade = hitInfo.shade;
+	  }
+	else{ //might render ISO surface
+	  //if(hitInfo.renderIsoSurface) std::cout<<"shading iso"<<std::endl;
+	  shade = hitInfo.node->GetMaterial()->Shade(r, hitInfo, lights, 5);
+	}
+      }
+      
+      renderImage.PutPixel(PixIndex, shade, hitInfo.z);
+    }
+    if(!pixelHit){
+      renderImage.PutPixel(PixIndex, black, BIGFLOAT);
+    }
     
-            HitInfo hitInfo;
-            hitInfo.Init();
-            
-            Point2 pixLoc = rarg.pixLocation;
-            Ray r = rarg.ray;
-            int PixIndex = rarg.pixIndex;
-            Color shade(255,255,255);
-            if(rootNode.GetNumChild()>0){
-                
-                if(RayTrace_2(r, hitInfo)) {
-                    pixelHit=true;
-		    if(hitInfo.volume)// &&  hitInfo.renderIsoSurface == false) //Volume is hit AND not shading surface then use color
-		      {
-			shade = hitInfo.shade;
-		      }
-		    else{ //might render ISO surface
-		      //if(hitInfo.renderIsoSurface) std::cout<<"shading iso"<<std::endl;
-		        shade = hitInfo.node->GetMaterial()->Shade(r, hitInfo, lights, 5);
-		    }
-                }
-                
-                renderImage.PutPixel(PixIndex, shade, hitInfo.z);
-                
-                
-            }
-            
-            if(!pixelHit){
-                
-                renderImage.PutPixel(PixIndex, black, BIGFLOAT);
-            
-            }
-    
-   
-    
-//    RenderParams renderArg = giveMeAPixelToRender();
-//    if(renderArg.renderComplete != 1){
-//            doRender(&renderArg);
-//    }
-//    
-    
-
 }
 
 void SetPixelAsRendered(int pixIndex)
@@ -664,7 +588,8 @@ int main(int argc, char* argv[])
   //  int xdim = 512, ydim = 512, zdim = 134; char* datafile="Pig.raw";// Pig.raw
   //      int xdim = 512,ydim=512,zdim=63; char* datafile = "Teddy_512x512x63.raw";//teddy
   //  int xdim = 256,ydim=256,zdim=161; char* datafile = "Tooth_256x256x161.raw";//tooth
-  int xdim = 256,ydim=256,zdim=512; char* datafile = "Carp_256x256x512.raw";//Carp
+  //  int xdim = 256,ydim=256,zdim=512; char* datafile = "Carp_256x256x512.raw";//Carp
+    int xdim = 512, ydim=512,zdim=106; char* datafile = "Cadhead_512x512x106.raw";//Cad head
     const char* filename = "scene.xml";
     unsigned short* volumeData = NULL;
     LoadScene(filename);
@@ -674,8 +599,8 @@ int main(int argc, char* argv[])
       	theBoxObject.SetData(volumeData);
 	theBoxObject.CalculateGradients();
 	theBoxObject.CreateCells();
-	//	BeginRender();
-	GlutKeyboard(' ', 0, 0);
+	//BeginRender();
+	std::cout<<"Fin setting up data... " <<std::endl;
       }
     else{
       std::cout<<"Failure to load data file"<<std::endl;
@@ -684,7 +609,7 @@ int main(int argc, char* argv[])
 
     glutInit(&argc,argv);
     ShowViewport();
-   
+    //   GlutKeyboard(' ', 0, 0);
    tp.destroy_threadpool();
 	return 0;
 }

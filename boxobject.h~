@@ -103,17 +103,14 @@ class BoxObject : public Object
 		//		DataPoints[x][y][z] =(int) theData[index];
 		DataPoints[x][y][z] =(int) theData[ (z * ydim + y) * xdim + x];
 		//(z * dim.y + y) * dim.x + x;
-		//		std::cout<<"DataPoints["<<x<<"]["<<y<<"]["<<z<<"]: "<<theData[index]<<std::endl;
+	
 		index++;
 	      }
 	  }
 	
       }
 
-    //    std::cout<<DataPoints[0][0][0]<<std::endl;
-
   }
-
   void CreateCells()
   {
     std::cout<<"Creating cells ..."<<std::endl;
@@ -140,20 +137,16 @@ class BoxObject : public Object
 	    for(int x = 0; x < n_cells_x; x++)
 	      {
 		Cell c;
-				c.Indices.resize(8);
-	      /*for(int i = 0; i< 8;i++)
-		  {
-		    c.Indices[i].resize(3);
-		  }
-		*/
-				c.Indices[0] = Point3(ix,iy,iz);
-				c.Indices[1] = Point3(ix+1,iy,iz);
-				c.Indices[2] = Point3(ix,iy+1,iz);
-				c.Indices[3] = Point3(ix+1,iy+1,iz);
-				c.Indices[4] = Point3(ix+1,iy,iz+1);
-				c.Indices[5] = Point3(ix,iy,iz+1);
-				c.Indices[6] = Point3(ix,iy+1,iz+1);
-				c.Indices[7] = Point3(ix+1,iy+1,iz+1);
+		c.Indices.resize(8);
+		
+		c.Indices[0] = Point3(ix,iy,iz);
+		c.Indices[1] = Point3(ix+1,iy,iz);
+		c.Indices[2] = Point3(ix,iy+1,iz);
+		c.Indices[3] = Point3(ix+1,iy+1,iz);
+		c.Indices[4] = Point3(ix+1,iy,iz+1);
+		c.Indices[5] = Point3(ix,iy,iz+1);
+		c.Indices[6] = Point3(ix,iy+1,iz+1);
+		c.Indices[7] = Point3(ix+1,iy+1,iz+1);
 		Cells[x][y][z] = c;
 		ix++;
 
@@ -243,7 +236,7 @@ class BoxObject : public Object
     //    std::cout<<start.p.x<<" " <<start.p.y<<" "<<start.p.z<<std::endl;
     //    std::cout<<end.p.x<<" " <<end.p.y<<" "<<end.p.z<<std::endl;
     //    std::cout<<end.z<<" "<<start.z<<" " << std::endl;
-    float dist = sqrt(pow((float)end.p.x - start.p.x, 2.0) + pow((float)end.p.y - start.p.y, 2.0) + pow((float)end.p.z - start.p.z,  2.0));
+    float dist = sqrt(std::pow((float)end.p.x - start.p.x, 2.0f) + pow((float)end.p.y - start.p.y, 2.0f) + pow((float)end.p.z - start.p.z,  2.0f));
     shade = Color (dist/10, dist/10, 0.0);
 
     //we know the ray. start the binning process- find which cell the current sample point is in, get the data points and average the color
@@ -291,7 +284,7 @@ class BoxObject : public Object
       	     //    std::cout<<"chosen: "<<cx<<" " <<cy<<" " <<cz<< std::endl;
 	    float data_tot = TrilinearInterpolate(sample,cx,cy,cz);//SampleCell(cx,cy,cz);
 	    
-	    float THRESHOLD = 13000;
+	    float THRESHOLD = 12000;
 	    if(data_tot > THRESHOLD) //ISo surface rendering
 	      {
 		//	 std::cout<<"Data: "<<data_tot<<std::endl;

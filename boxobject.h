@@ -154,6 +154,7 @@ class BoxObject : public Object
 	    iy++;
 	  }
 	iz++;
+	std::cout<<iz<<std::endl;
       }
   }
   bool IntersectRay(const Ray &ray, HitInfo &hInfo, int hitSide=HIT_FRONT ) const
@@ -284,7 +285,7 @@ class BoxObject : public Object
       	     //    std::cout<<"chosen: "<<cx<<" " <<cy<<" " <<cz<< std::endl;
 	    float data_tot = TrilinearInterpolate(sample,cx,cy,cz);//SampleCell(cx,cy,cz);
 	    
-	    float THRESHOLD = 14000;
+	    float THRESHOLD = 12000;
 	    if(data_tot > THRESHOLD) //ISo surface rendering
 	      {
 		//	 std::cout<<"Data: "<<data_tot<<std::endl;

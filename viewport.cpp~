@@ -86,7 +86,7 @@ static int      startTime;                      // Start time of rendering
 void GlutDisplay();
 void GlutReshape(int w, int h);
 void GlutIdle();
-void GlutKeyboard(unsigned char key, int x, int y);
+
 void GlutMouse(int button, int state, int x, int y);
 
 //-------------------------------------------------------------------------------
@@ -117,7 +117,7 @@ void ShowViewport()
     glEnable(GL_NORMALIZE);
     
     glLineWidth(2);
-    
+    GlutKeyBoard(' ', 0, 0);
     glutMainLoop();
 }
 
@@ -286,6 +286,7 @@ void GlutKeyboard(unsigned char key, int x, int y)
         case ' ':
             switch ( mode ) {
                 case MODE_READY:
+		  printf("Mode ready. Begin render..\n");
                     mode = MODE_RENDERING;
                     viewMode = VIEWMODE_IMAGE;
                     DrawScene(true);
