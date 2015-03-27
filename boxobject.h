@@ -154,7 +154,6 @@ class BoxObject : public Object
 	    iy++;
 	  }
 	iz++;
-	std::cout<<iz<<std::endl;
       }
   }
   bool IntersectRay(const Ray &ray, HitInfo &hInfo, int hitSide=HIT_FRONT ) const

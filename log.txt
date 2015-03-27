@@ -1,0 +1,8 @@
+3/27/2015 Friday
+volume vis:
+-histogram of data (find min max and then bin)
+	   while parsing search min, max
+	   set range and num of bins
+	   loop over data again and increment bin count
+	   print bins
+-try other techniques: (mip, iso-surface, compositing)

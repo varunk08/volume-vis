@@ -24,4 +24,6 @@ tinyxmlerror.o: tinyxml/tinyxmlerror.cpp
 #	${CC} ${CXXFLAGS} $< -o $@
 
 clean:
-	rm -f *.o
+	rm -f *.o;
+	rm raytracer
+	

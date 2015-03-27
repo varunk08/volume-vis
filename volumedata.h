@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <iostream>
 
+void CreateHistogram(unsigned short* volume_data, int size);
 bool LoadVolumeData(const char* filename, int xdim, int ydim, int zdim, unsigned short** data);
 
 #endif
