@@ -74,7 +74,7 @@ enum ViewMode
 {
     VIEWMODE_OPENGL,
     VIEWMODE_IMAGE,
-    VIEWMODE_Z,
+    VIEWMODE_Z
 };
 
 static Mode     mode        = MODE_READY;       // Rendering mode
@@ -117,6 +117,7 @@ void ShowViewport()
     glEnable(GL_NORMALIZE);
     
     glLineWidth(2);
+    printf("Show viewport\n");
     GlutKeyboard(' ', 0, 0);
     glutMainLoop();
 }
@@ -168,6 +169,7 @@ void DrawNode( Node *node )
 
 void DrawScene(bool capture=false)
 {
+
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     
     glEnable( GL_LIGHTING );
@@ -252,6 +254,7 @@ void GlutIdle()
     static int lastRenderedPixels = 0;
     if ( mode == MODE_RENDERING ) {
         int nrp = renderImage.GetNumRenderedPixels();
+	printf("Nrp: %d\n",nrp);
         if ( lastRenderedPixels != nrp ) {
             lastRenderedPixels = nrp;
             if ( renderImage.IsRenderDone() ) {
@@ -265,11 +268,7 @@ void GlutIdle()
                 printf("\nRender time is %d:%02d:%02d.\n",h,m,s);
                 
                 printf("Render Complete");
-                
-                renderImage.ComputeZBufferImage();
-                renderImage.SaveZImage("images/zbuffer.ppm");
-                renderImage.SaveImage("images/renderimage.ppm");
-            }
+	    }
             glutPostRedisplay();
         }
     }

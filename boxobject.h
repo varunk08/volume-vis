@@ -29,6 +29,7 @@ class BoxObject : public Object
   vector< vector<vector <Point3> > > GradientDiffs;
   //Data points
   vector< vector<vector <int> > > DataPoints;
+  unsigned short* us_dataPoints;
   //Cells
   vector < vector <vector <Cell> > > Cells;
  public:
@@ -83,8 +84,11 @@ class BoxObject : public Object
   }
   void SetData(unsigned short* theData)
   {
+
     std::cout<<"Filling data ..."<<std::endl;
-    unsigned int size = xdim * ydim * zdim;
+    this->us_dataPoints = theData;
+    /***
+	unsigned int size = xdim * ydim * zdim;
     std::cout<<"Size: "<<size<<std::endl;
     DataPoints.resize(xdim);
     for(int i = 0; i < xdim; i++)
@@ -109,6 +113,8 @@ class BoxObject : public Object
 	  }
 	
       }
+    delete[] theData;
+    ***/
 
   }
   void CreateCells()
@@ -284,7 +290,7 @@ class BoxObject : public Object
       	     //    std::cout<<"chosen: "<<cx<<" " <<cy<<" " <<cz<< std::endl;
 	    float data_tot = TrilinearInterpolate(sample,cx,cy,cz);//SampleCell(cx,cy,cz);
 	    
-	    float THRESHOLD = 12000;
+	    float THRESHOLD = 7000;
 	    if(data_tot > THRESHOLD) //ISo surface rendering
 	      {
 		//	 std::cout<<"Data: "<<data_tot<<std::endl;
@@ -308,6 +314,10 @@ class BoxObject : public Object
     return shade;
     
   }
+  inline int getIndex(int x, int y, int z) const
+  {
+    return ( z * ydim + y ) * xdim + x;
+  }
   float TrilinearInterpolate(Point3 samplePt, int x, int y, int z) const
   {
     Cell c = Cells[x][y][z];
@@ -319,9 +329,10 @@ class BoxObject : public Object
     Point3 p1 =  CornerLocations[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z];
     Point3 p2 = CornerLocations[c.Indices[7].x][c.Indices[7].y][c.Indices[7].z];
     float* v = new float[8];
-    for(int i = 0; i < 8; i++)
-      v[i] = DataPoints[c.Indices[i].x][c.Indices[i].y][c.Indices[i].z];
-
+    for(int i = 0; i < 8; i++){
+      //v[i] = DataPoints[c.Indices[i].x][c.Indices[i].y][c.Indices[i].z];
+      v[i] = us_dataPoints[getIndex(c.Indices[i].x,c.Indices[i].y,c.Indices[i].z)];
+    }
     xd = (samplePt.x - p1.x)/(p2.x - p1.x);
     yd = (samplePt.y - p1.y)/(p2.y - p1.y);
     zd = (samplePt.z - p1.z)/(p2.z - p1.z);
@@ -354,17 +365,17 @@ class BoxObject : public Object
 	    for(int x=0; x<xdim;x++)
 	      {
 		float xn, xp, yn, yp, zn, zp;
-		if(x > 0) xp = DataPoints[x-1][y][z];
+		if(x > 0) xp = us_dataPoints[getIndex(x-1,y,z)];//DataPoints[x-1][y][z];
 		else xp=0;
-		if(x < xdim-1) xn = DataPoints[x+1][y][z];
+		if(x < xdim-1) xn = us_dataPoints[getIndex(x+1,y,z)];//DataPoints[x+1][y][z];
 		else xn = 0;
-		if(y > 0) yp = DataPoints[x][y-1][z];
+		if(y > 0) yp = us_dataPoints[getIndex(x,y-1,z)];//DataPoints[x][y-1][z];
 		else  yp = 0;
-		if(y < ydim-1) yn = DataPoints[x][y+1][z];
+		if(y < ydim-1) yn = us_dataPoints[getIndex(x,y+1,z)];//DataPoints[x][y+1][z];
 		else yn = 0;
-		if(z > 0) zp = DataPoints[x][y][z-1];
+		if(z > 0) zp = us_dataPoints[getIndex(x,y,z-1)];//DataPoints[x][y][z-1];
 		else zp=0;
-		if(z < zdim-1) zn = DataPoints[x][y][z+1];
+		if(z < zdim-1) zn = us_dataPoints[getIndex(x,y,z+1)];//DataPoints[x][y][z+1];
 		else zn = 0;
 		Point3 N =  Point3(xn - xp, yn - yp, zn - zp);
 		//N.Normalize();
@@ -411,7 +422,7 @@ class BoxObject : public Object
   {
     Cell c = Cells[x][y][z];
     //       std::cout<<"sample: "<<x<<" "<<y<<" "<<z<<std::endl;
-    return DataPoints[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z];
+    return us_dataPoints[getIndex(c.Indices[0].x,c.Indices[0].y,c.Indices[0].z)];//DataPoints[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z];
   }
   Point3 EstimateGradient(int x, int y, int z) const
   {

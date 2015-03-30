@@ -6,3 +6,35 @@ volume vis:
 	   loop over data again and increment bin count
 	   print bins
 -try other techniques: (mip, iso-surface, compositing)
+
+
+3/28/2015 Saturday
+histogram done
+-fix iso surface rendering inaccuracies and noise
+-fix speed of rendering
+-set color and alpha values to bins
+     do step function for now to the bins
+     assign arbitrary alpha values
+     look into transfer functions proper-pascal 
+     function color(density): return color
+     function opacity(density): return density
+-schemes ( first-iso, average-xray, accumulate-compositing, max intensity )
+#-remove background walls (figure out why rendering fails on removing walls)
+-add more lights
+
+3/29/2015 Sunday
+
+-work on setting color and alpha values to bins
+-work on removing index data structure
+ -iterate through the corner locations 
+ -figure out neighbors on the fly
+ -get the correct bounding indices from corner locations
+ -use these indices for gradients, data points
+
+3/30/2015 Monday
+-check that old stuff works (works, but took 23 min for threshold of 7k!)
+       -git push + new branch
+       -begin major refactoring (on the fly calc for binning)
+       -old: 20n*float + n * int
+       -new: 9n * float + n*int
+-try removing index data  structures

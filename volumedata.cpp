@@ -34,10 +34,11 @@ void CreateHistogram(unsigned short* volume_data, int size)
   std::cout<<"Max: "<<max<<std::endl;
   int binVal = 1000;
   int n = max / binVal;
-  int* bins = new int[n];
+  int* bins = new int[n+1]();
+  
   for( int i=0; i<size; i++ ){
     for( int j=0; j<=n; j++){
-      if( volume_data[i] > j * binVal && volume_data[i] < (j+1) * binVal){
+      if( volume_data[i] >= j * binVal && volume_data[i] < (j+1) * binVal){
 	bins[j]++;
 	continue;
       }
@@ -46,10 +47,20 @@ void CreateHistogram(unsigned short* volume_data, int size)
       }
     }
   }
-
-  for(int i=0; i<n; i++){
-    std::cout<<"Bin "<<i<<": "<<bins[i]<<std::endl;
+int sum = 0;
+ int max_bin = 0;
+ int max_i = -1;
+  for(int i=0; i<=n; i++){
+    sum += bins[i];
+    if( bins[i] > max_bin ){
+      max_bin = bins[i];
+      max_i = i;
+    }
+    //std::cout<<"Bin "<<i<<": "<<bins[i]<<std::endl;
   }
+  //std::cout<<"SUM: "<<sum<<std::endl;
+  //std::cout<<"Max bin index: "<<max_i<<std::endl;
+  std::cout<<"Max bin value: "<<max_bin<<std::endl;
   delete[] bins;
   return;
 }

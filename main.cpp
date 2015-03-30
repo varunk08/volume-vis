@@ -8,7 +8,7 @@
 #include <math.h>
 #include <cmath>
 #include "cyColor.h"
-#include <pthread.h>
+
 #include <unistd.h>
 #include <vector>
 #include "threadpool.h"
@@ -20,27 +20,8 @@ using namespace std;
 #define BIAS_SHADOW 1e-4f
 #define BIAS_SHADING 0.001f
 #define _USE_MATH_DEFINES
-#define NUM_THREADS  4
+#define NUM_THREADS  8
 
-struct RenderParams{
-    Point3 K;
-    int pixIndex;
-    Point2 pixLocation;
-    bool renderComplete = false;
-    Ray ray;
-};
-
-
-struct ImageParams{
-    unsigned int NUM_PIXELS;
-    vector<int> PixIndex;
-    vector<bool> rendered;
-    vector<Point2> PixLocation;
-    vector<Point3> K;
-    vector<Ray> Ray;
-}imageParams;
-
-ThreadPool tp(NUM_THREADS);
 Camera camera;
 Node rootNode;
 RenderImage renderImage;
@@ -53,39 +34,40 @@ LightList lights;
 ObjFileList objList;
 
 
-pthread_t threadID[NUM_THREADS];
-pthread_mutex_t getPix_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t setPix_mutex = PTHREAD_MUTEX_INITIALIZER;
-RenderParams args[NUM_THREADS];
+
 
 Color24 white(cyColor(255.0));
 Color24 black(cyColor(0.0));
-RenderParams giveMeAPixelToRender();
+
 bool TraceNode(const Ray &r,HitInfo &hitInfo,const Node &curNode);
 bool RayTrace(HitInfo &hitInfo, Node* node,Ray ray,int PixIndex);
 bool RayTrace_2(const Ray &ray, HitInfo &hitInfo);
-void PopulateImageParams();
-void doRender(void* arg);
-void SetPixelAsRendered(int pixelIndex);
 
-void PopulateImageParams()
+
+//! Un-threaded begin render
+void BeginRender()
 {
-    cout<<"Populating ImageParams..."<<endl;
+  std::cout<<"\nBeginning Render...\n";
+    
     float alpha = camera.fov;
     float l = 1.0;
     float h = l * tan(alpha/2.0 *(M_PI/180));
-    
     float aspectRatio = (float)camera.imgWidth/camera.imgHeight;
     float s = aspectRatio * abs(h);
     float dx = (2 * abs(s))/camera.imgWidth;
     float dy = -(2 * abs(h))/camera.imgHeight;
     float dxx = dx/2,dyy=dy/2;
     Point3 K(-s,h,-l);
-    K.x += (dxx );
-    K.y += (dyy );
     
-    for(int i = 0; i< camera.imgHeight ; i++){
-        for(int j = 0; j< camera.imgWidth; j++){
+    K.x += dxx;
+    K.y += dyy;
+    
+    for(int i = 0; i< camera.imgHeight; i++){
+        for(int j = 0; j<camera.imgWidth; j++){
+	  std::cout<<"("<<j<<"/"<<camera.imgWidth<<","<<i<<"/"<<camera.imgHeight<<")\r";
+	  std::cout.flush();
+            int PixIndex = i * camera.imgWidth + j;
+            bool pixelHit=false;
             K.x += dx;
             Matrix3 RotMat;
             cyPoint3f f = camera.dir;
@@ -95,116 +77,46 @@ void PopulateImageParams()
             cyPoint3f u = s.Cross(f);
             const float pts[9]={s.x,u.x,-f.x,s.y,u.y,-f.y,s.z,u.z,-f.z};
             RotMat.Set(pts);
+    
             Ray r(camera.pos, K);
             r.dir=r.dir*RotMat;
             r.dir.Normalize();
-            
-            /* Populating the Struct */
-            Point2 pixLoc = Point2(j,i);
-            //imageParams.K.push_back(K);
-            imageParams.rendered.push_back(false);
-            imageParams.PixLocation.push_back(pixLoc);
-            imageParams.PixIndex.push_back( i * camera.imgWidth + j);
-            imageParams.Ray.push_back(r);
-                        
-        }
-        K.x = -s;
-        K.x += dxx;
-        K.y += dy;
-    }
     
-   
-
-}
-void BeginRender()
-{
-  std::cout<<"Beginning Render.."<<std::endl;
-    imageParams.NUM_PIXELS = camera.imgHeight * camera.imgWidth;
-    PopulateImageParams();
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+            HitInfo hitInfo;
+            hitInfo.Init();
+           
     
-    int ret = tp.initialize_threadpool();
-    if (ret == -1) {
-        cerr << "Failed to initialize thread pool!" << endl;
-        //return 0;
-    }
-    else{
-    for (int i = 0; i < imageParams.NUM_PIXELS; i++) {
-        RenderParams* x = new RenderParams();
-        x->pixIndex = imageParams.PixIndex.at(i);
-        x->pixLocation = imageParams.PixLocation.at(i);
-        x->ray = imageParams.Ray.at(i);
-
-        Task* t = new Task(&doRender, (void*) x);
-        tp.add_task(t);
-    }
-    //usleep(20);
-    }
-}
-RenderParams giveMeAPixelToRender()
-{
-    //cout<<"Getting Pixel"<<endl;
-    pthread_mutex_lock(&getPix_mutex);
-    RenderParams rParams;
-    int i =0;
-    for ( i = 0; i<imageParams.NUM_PIXELS; i++) {
-        if(imageParams.rendered[i] != 1){
-	            //rParams.K = imageParams.K.at(i);
-            rParams.pixIndex = imageParams.PixIndex.at(i);
-            rParams.pixLocation = imageParams.PixLocation.at(i);
-            rParams.ray = imageParams.Ray.at(i);
-            break;
-        }
-        
-    }
-    if(i == imageParams.NUM_PIXELS){
-        rParams.renderComplete = true;
-
-    }
-    pthread_mutex_unlock(&getPix_mutex);
-    return rParams;
-}
-
-void doRender(void* arg){
-    
-    RenderParams rarg = *((RenderParams *)arg);
-
-    bool pixelHit=false;
-    HitInfo hitInfo;
-    hitInfo.Init();
-    Point2 pixLoc = rarg.pixLocation;
-    Ray r = rarg.ray;
-    int PixIndex = rarg.pixIndex;
-    Color shade(255,255,255);
-    if(rootNode.GetNumChild()>0){
-      if(RayTrace_2(r, hitInfo)) {
-	pixelHit=true;
-	if(hitInfo.volume)// &&  hitInfo.renderIsoSurface == false) //Volume is hit AND not shading surface then use color
-	  {
-	    shade = hitInfo.shade;
-	  }
-	else{ //might render ISO surface
-	  //if(hitInfo.renderIsoSurface) std::cout<<"shading iso"<<std::endl;
-	  shade = hitInfo.node->GetMaterial()->Shade(r, hitInfo, lights, 5);
-	}
-      }
+            Color shade(255,255,255);
+	    if(rootNode.GetNumChild()>0){
+	      if(RayTrace_2(r, hitInfo)) {
+		pixelHit=true;
+		if(hitInfo.volume)// &&  hitInfo.renderIsoSurface == false) //Volume is hit AND not shading surface then use color
+		  {
+		    shade = hitInfo.shade;
+		  }
+		else{ //might render ISO surface
+		  //if(hitInfo.renderIsoSurface) std::cout<<"shading iso"<<std::endl;
+		  shade = hitInfo.node->GetMaterial()->Shade(r, hitInfo, lights, 5);
+		}
+	      }
       
-      renderImage.PutPixel(PixIndex, shade, hitInfo.z);
+	      renderImage.PutPixel(PixIndex, shade, hitInfo.z);
+	    }
+	    if(!pixelHit){
+	      renderImage.PutPixel(PixIndex, black, BIGFLOAT);
+	    }
+	}
+	    K.x = -s;
+	    K.x += dxx;
+	    K.y += dy;
     }
-    if(!pixelHit){
-      renderImage.PutPixel(PixIndex, black, BIGFLOAT);
-    }
+    cout<<"Render Complete"<<endl;
+    renderImage.ComputeZBufferImage();
+    renderImage.SaveZImage("images/zbuffer.ppm");
+    renderImage.SaveImage("images/renderimage.ppm");
     
 }
 
-void SetPixelAsRendered(int pixIndex)
-{
-    pthread_mutex_lock(&setPix_mutex);
-     imageParams.rendered.at(pixIndex) = true;
-    pthread_mutex_unlock(&setPix_mutex);
-}
 float GenLight::Shadow(Ray ray, float t_max)
 {
    // cout<<"Calculating shadow"<<endl;
@@ -517,7 +429,7 @@ bool TraceNode(const Ray &r, HitInfo &hInfo,const Node &node)
 
 void StopRender()
 {
-    
+  std::cout<<"Stop Render ..."<<std::endl;
 }
 
 void MtlBlinn::SetViewportMaterial() const{
@@ -590,17 +502,16 @@ int main(int argc, char* argv[])
   //  int xdim = 256,ydim=256,zdim=161; char* datafile = "data/Tooth_256x256x161.raw";//tooth
   //  int xdim = 256,ydim=256,zdim=512; char* datafile = "data/Carp_256x256x512.raw";//Carp
     int xdim = 512, ydim=512,zdim=106; char* datafile = "data/Cadhead_512x512x106.raw";//Cad head
+
     const char* filename = "scene.xml";
     unsigned short* volumeData = NULL;
     LoadScene(filename);
-    if(    LoadVolumeData(datafile, xdim, ydim, zdim, &volumeData) )
-      {
+    if( LoadVolumeData(datafile, xdim, ydim, zdim, &volumeData) ){
 	theBoxObject.SetDimensions(xdim, ydim, zdim);
       	theBoxObject.SetData(volumeData);
 	theBoxObject.CalculateGradients();
 	theBoxObject.CreateCells();
-	//BeginRender();
-	std::cout<<"Fin setting up data... " <<std::endl;
+	volumeData = NULL;
       }
     else{
       std::cout<<"Failure to load data file"<<std::endl;
@@ -609,8 +520,7 @@ int main(int argc, char* argv[])
 
     glutInit(&argc,argv);
     ShowViewport();
-    //   GlutKeyboard(' ', 0, 0);
-   tp.destroy_threadpool();
-	return 0;
+
+    return 0;
 }
 

@@ -18,7 +18,7 @@
 #include <string.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <pthread.h>
+
 #include <vector>
 #include "utils.h"
 #include "cyPoint.h"
@@ -35,7 +35,7 @@ typedef cyColorA ColorA;
 typedef cyColor24 Color24;
 
 typedef unsigned char uchar;
-//pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+
 //-------------------------------------------------------------------------------
 
 /*#ifndef min
@@ -418,20 +418,14 @@ public:
 	uchar*		GetZBufferImage()	{ return zbuffer8; }
     
 	void	ResetNumRenderedPixels()		{ numRenderedPixels=0; }
-	int		GetNumRenderedPixels() const	{ return numRenderedPixels; }
+	int	GetNumRenderedPixels() const	{ return numRenderedPixels; }
 	void	IncrementNumRenderPixel(int n)	{ numRenderedPixels+=n; }	// not thread-safe
 	bool	IsRenderDone() const			{ return numRenderedPixels >= width*height; }
-    //custom
+
+	//! custom implementation in scene.cpp
 	void PutPixel(int index, Color24 color,float zbuf);
-      /*    {
-        img[index]=color;
-        zbuffer[index] = zbuf;
-        //std::cout<<"zbuf: "<<index<<std::endl;
-        pthread_mutex_lock(&mutex1);
-        IncrementNumRenderPixel(1);
-        pthread_mutex_unlock(&mutex1);
-    }
-      */
+
+      
 	void	ComputeZBufferImage()
 	{
 		int size = width * height;
