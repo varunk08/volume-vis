@@ -47,73 +47,73 @@ bool RayTrace_2(const Ray &ray, HitInfo &hitInfo);
 //! Un-threaded begin render
 void BeginRender()
 {
-  std::cout<<"\nBeginning Render...\n";
+  std::cout<<"Rendering ...\n";
     
-    float alpha = camera.fov;
-    float l = 1.0;
-    float h = l * tan(alpha/2.0 *(M_PI/180));
-    float aspectRatio = (float)camera.imgWidth/camera.imgHeight;
-    float s = aspectRatio * abs(h);
-    float dx = (2 * abs(s))/camera.imgWidth;
-    float dy = -(2 * abs(h))/camera.imgHeight;
-    float dxx = dx/2,dyy=dy/2;
-    Point3 K(-s,h,-l);
+  float alpha = camera.fov;
+  float l = 1.0;
+  float h = l * tan(alpha/2.0 *(M_PI/180));
+  float aspectRatio = (float)camera.imgWidth/camera.imgHeight;
+  float s = aspectRatio * abs(h);
+  float dx = (2 * abs(s))/camera.imgWidth;
+  float dy = -(2 * abs(h))/camera.imgHeight;
+  float dxx = dx/2,dyy=dy/2;
+  Point3 K(-s,h,-l);
     
-    K.x += dxx;
-    K.y += dyy;
+  K.x += dxx;
+  K.y += dyy;
     
-    for(int i = 0; i< camera.imgHeight; i++){
-        for(int j = 0; j<camera.imgWidth; j++){
-	  std::cout<<"("<<j<<"/"<<camera.imgWidth<<","<<i<<"/"<<camera.imgHeight<<")\r";
-	  std::cout.flush();
-            int PixIndex = i * camera.imgWidth + j;
-            bool pixelHit=false;
-            K.x += dx;
-            Matrix3 RotMat;
-            cyPoint3f f = camera.dir;
-            f.Normalize();
-            cyPoint3f s = f.Cross(camera.up);
-            s.Normalize();
-            cyPoint3f u = s.Cross(f);
-            const float pts[9]={s.x,u.x,-f.x,s.y,u.y,-f.y,s.z,u.z,-f.z};
-            RotMat.Set(pts);
+  for(int i = 0; i< camera.imgHeight; i++){
+    for(int j = 0; j<camera.imgWidth; j++){
+      std::cout<<"("<<j<<" / "<<camera.imgWidth<<","<<i<<" / "<<camera.imgHeight<<")\r";
+      std::cout.flush();
+      int PixIndex = i * camera.imgWidth + j;
+      bool pixelHit=false;
+      K.x += dx;
+      Matrix3 RotMat;
+      cyPoint3f f = camera.dir;
+      f.Normalize();
+      cyPoint3f s = f.Cross(camera.up);
+      s.Normalize();
+      cyPoint3f u = s.Cross(f);
+      const float pts[9]={s.x,u.x,-f.x,s.y,u.y,-f.y,s.z,u.z,-f.z};
+      RotMat.Set(pts);
     
-            Ray r(camera.pos, K);
-            r.dir=r.dir*RotMat;
-            r.dir.Normalize();
+      Ray r(camera.pos, K);
+      r.dir=r.dir*RotMat;
+      r.dir.Normalize();
     
-            HitInfo hitInfo;
-            hitInfo.Init();
+      HitInfo hitInfo;
+      hitInfo.Init();
            
     
-            Color shade(255,255,255);
-	    if(rootNode.GetNumChild()>0){
-	      if(RayTrace_2(r, hitInfo)) {
-		pixelHit=true;
-		if(hitInfo.volume)// &&  hitInfo.renderIsoSurface == false) //Volume is hit AND not shading surface then use color
-		  {
-		    shade = hitInfo.shade;
-		  }
-		else{ //might render ISO surface
-		  //if(hitInfo.renderIsoSurface) std::cout<<"shading iso"<<std::endl;
-		  shade = hitInfo.node->GetMaterial()->Shade(r, hitInfo, lights, 5);
-		}
-	      }
-      
-	      renderImage.PutPixel(PixIndex, shade, hitInfo.z);
+      Color shade(255,255,255);
+      if(rootNode.GetNumChild()>0){
+	if(RayTrace_2(r, hitInfo)) {
+	  pixelHit=true;
+	  if(hitInfo.volume)// &&  hitInfo.renderIsoSurface == false) //Volume is hit AND not shading surface then use color
+	    {
+	      shade = hitInfo.shade;
 	    }
-	    if(!pixelHit){
-	      renderImage.PutPixel(PixIndex, black, BIGFLOAT);
-	    }
+	  else{ //might render ISO surface
+	    //if(hitInfo.renderIsoSurface) std::cout<<"shading iso"<<std::endl;
+	    shade = hitInfo.node->GetMaterial()->Shade(r, hitInfo, lights, 5);
+	  }
 	}
-	    K.x = -s;
-	    K.x += dxx;
-	    K.y += dy;
+      
+	renderImage.PutPixel(PixIndex, shade, hitInfo.z);
+      }
+      if(!pixelHit){
+	renderImage.PutPixel(PixIndex, black, BIGFLOAT);
+      }
     }
-    cout<<"Render Complete"<<endl;
-    renderImage.ComputeZBufferImage();
-    renderImage.SaveZImage("images/zbuffer.ppm");
-    renderImage.SaveImage("images/renderimage.ppm");
+    K.x = -s;
+    K.x += dxx;
+    K.y += dy;
+  }
+  cout<<"Render Complete"<<endl;
+  renderImage.ComputeZBufferImage();
+  renderImage.SaveZImage("images/zbuffer.ppm");
+  renderImage.SaveImage("images/renderimage.ppm");
     
 }
 
@@ -378,50 +378,34 @@ bool RayTrace_2(const Ray &ray, HitInfo &hitInfo)
 
 bool TraceNode(const Ray &r, HitInfo &hInfo,const Node &node)
 {
-//    cout<<"Tracenode"<<endl;
+
     Ray ray = r;
     ray = node.ToNodeCoords(r);
-//    cout<<"...To node coords"<<endl;
+
     const Object* obj = node.GetObject();
     bool objHitTest = false;
     bool childHit = false;
     
-    if(obj)
-    {
-//        if(!hInfo.front){ hitSide = HIT_FRONT_AND_BACK; } /* Back face hit for refraction */
-        
+    if(obj)    {
         if(obj->IntersectRay(ray, hInfo)){
-            
             objHitTest=true;
             hInfo.node = &node;
         }
     }
-    if (node.GetNumChild() > 0)
-    {
-
-        for (int i = 0; i < node.GetNumChild(); i++)
-        {
-            
-//            cout<<"Child "<<i<<endl;
+    if (node.GetNumChild() > 0)    {
+        for (int i = 0; i < node.GetNumChild(); i++)        {
             Ray r = ray;
             const Node &childNode = *node.GetChild(i);
             if(TraceNode(r, hInfo, childNode)){
                     childHit = true;
             }
-            
-//            cout<<"Child "<<i<<" out"<<endl;
         }
-        if(childHit)
-        {
-            //node.FromNodeCoords(hInfo);
+        if(childHit)        {
             objHitTest = true;
         }
     }
     
-    
     if(objHitTest){
-        //hInfo.node = &node;
-//        cout<<"..From node coords - child hit not parent"<<endl;
        node.FromNodeCoords(hInfo);
     }
     return objHitTest;
@@ -498,8 +482,8 @@ int main(int argc, char* argv[])
 {
   //  int xdim = 400, ydim = 296, zdim = 352; //walnut
   //  int xdim = 512, ydim = 512, zdim = 134; char* datafile="data/Pig.raw";// Pig.raw
-  //      int xdim = 512,ydim=512,zdim=63; char* datafile = "data/Teddy_512x512x63.raw";//teddy
-  //  int xdim = 256,ydim=256,zdim=161; char* datafile = "data/Tooth_256x256x161.raw";//tooth
+  //  int xdim = 512,ydim=512,zdim=63; char* datafile = "data/Teddy_512x512x63.raw";//teddy
+  //   int xdim = 256,ydim=256,zdim=161; char* datafile = "data/Tooth_256x256x161.raw";//tooth
   //  int xdim = 256,ydim=256,zdim=512; char* datafile = "data/Carp_256x256x512.raw";//Carp
     int xdim = 512, ydim=512,zdim=106; char* datafile = "data/Cadhead_512x512x106.raw";//Cad head
 
@@ -510,7 +494,6 @@ int main(int argc, char* argv[])
 	theBoxObject.SetDimensions(xdim, ydim, zdim);
       	theBoxObject.SetData(volumeData);
 	theBoxObject.CalculateGradients();
-	theBoxObject.CreateCells();
 	volumeData = NULL;
       }
     else{

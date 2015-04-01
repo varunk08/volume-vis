@@ -11,10 +11,6 @@
 #include "scene.h"
 
 using namespace std;
-typedef struct
-{
-  vector <Point3> Indices;
-} Cell;
 
 class BoxObject : public Object
 {
@@ -22,16 +18,11 @@ class BoxObject : public Object
   Point3 pmin;
   Point3 pmax;
   int xdim, ydim, zdim, _size;
-  int n_cells_x,n_cells_y,n_cells_z;
-  //Corner points data
-  vector< vector<vector <Point3> > > CornerLocations;
-  //gradients
-  vector< vector<vector <Point3> > > GradientDiffs;
-  //Data points
-  vector< vector<vector <int> > > DataPoints;
+
+  vector<Point3> CornerPos;
+  vector<Point3> Gradients;
   unsigned short* us_dataPoints;
-  //Cells
-  vector < vector <vector <Cell> > > Cells;
+
  public:
   BoxObject()
     {
@@ -48,16 +39,10 @@ class BoxObject : public Object
     this->ydim = ydim;
     this->zdim = zdim;
     this->_size = xdim * ydim * zdim;
-    std::cout << "Setting dimensions-> Size: "<<_size<<std::endl;
-    //create cells
-    std::cout<<"Filling corner locations ..."<<std::endl;
-    CornerLocations.resize(xdim);
-    for(int i = 0; i < xdim; i++)
-      {
-	CornerLocations[i].resize(ydim);
-	for(int j = 0; j < ydim; j++)
-	  CornerLocations[i][j].resize(zdim);
-      }
+    std::cout << "Calculating corner positions for "<<_size<<" points ..." <<std::endl;
+
+    CornerPos.resize( this->_size );
+
     float startX = -1.0f;
     float startY = -1.0f;
     float startZ = -1.0f;
@@ -71,97 +56,19 @@ class BoxObject : public Object
 	    for(int x = 0; x < xdim; x++)
 	      {
 		newX = startX + x * (2.0 / (xdim - 1));
-		CornerLocations[x][y][z] = Point3(newX, newY, newZ);
-		//		std::cout<<"CornerLocations["<<x<<"]["<<y<<"]["<<z<<"]: "<<CornerLocations[x][y][z].x<<","<<CornerLocations[x][y][z].y<<","<<CornerLocations[x][y][z].z<<std::endl;
+		CornerPos[getIndex(x,y,z)] = Point3(newX, newY, newZ);
 	      }
 	  }
       }
 
-    Point3 c = CornerLocations[xdim-1][ydim-1][zdim-1];
-    std::cout<<"Corner: " <<c.x << " "<<c.y<<" "<<c.z<<" "<<std::endl;
-
-
   }
+
   void SetData(unsigned short* theData)
   {
-
-    std::cout<<"Filling data ..."<<std::endl;
     this->us_dataPoints = theData;
-    /***
-	unsigned int size = xdim * ydim * zdim;
-    std::cout<<"Size: "<<size<<std::endl;
-    DataPoints.resize(xdim);
-    for(int i = 0; i < xdim; i++)
-      {
-	DataPoints[i].resize(ydim);
-	for(int j = 0; j < ydim; j++)
-	  DataPoints[i][j].resize(zdim);
-      }
-    int index = 0;
-    for(int z=0; z < zdim; z++)
-      {
-	for(int y = 0; y < ydim; y++)
-	  {
-	    for(int x = 0; x < xdim; x++)
-	      {
-		//		DataPoints[x][y][z] =(int) theData[index];
-		DataPoints[x][y][z] =(int) theData[ (z * ydim + y) * xdim + x];
-		//(z * dim.y + y) * dim.x + x;
-	
-		index++;
-	      }
-	  }
-	
-      }
-    delete[] theData;
-    ***/
-
+    return;
   }
-  void CreateCells()
-  {
-    std::cout<<"Creating cells ..."<<std::endl;
-    int ix = 0, iy = 0, iz= 0;
-    n_cells_x = xdim - 1;
-    n_cells_y = ydim - 1;
-    n_cells_z = zdim - 1;
-    Cells.resize(n_cells_x);
-    for(int i = 0; i < n_cells_x; i++)
-      {
-	Cells[i].resize(n_cells_y);
-	for(int j=0; j<n_cells_y; j++)
-	  Cells[i][j].resize(n_cells_z);
-      }
 
-
-
-    for(int z = 0; z < n_cells_z; z++)
-      {
-	iy=0;
-	for(int y = 0; y < n_cells_y; y++)
-	  {
-	    ix = 0;
-	    for(int x = 0; x < n_cells_x; x++)
-	      {
-		Cell c;
-		c.Indices.resize(8);
-		
-		c.Indices[0] = Point3(ix,iy,iz);
-		c.Indices[1] = Point3(ix+1,iy,iz);
-		c.Indices[2] = Point3(ix,iy+1,iz);
-		c.Indices[3] = Point3(ix+1,iy+1,iz);
-		c.Indices[4] = Point3(ix+1,iy,iz+1);
-		c.Indices[5] = Point3(ix,iy,iz+1);
-		c.Indices[6] = Point3(ix,iy+1,iz+1);
-		c.Indices[7] = Point3(ix+1,iy+1,iz+1);
-		Cells[x][y][z] = c;
-		ix++;
-
-	      }
-	    iy++;
-	  }
-	iz++;
-      }
-  }
   bool IntersectRay(const Ray &ray, HitInfo &hInfo, int hitSide=HIT_FRONT ) const
   {
     bool boxHit = false;
@@ -195,122 +102,110 @@ class BoxObject : public Object
     tempHInfo.z = hInfo.z;
     std::vector<HitInfo> hitZ;
     hitZ.clear();
-       for(int i = 0; i < 36; i+=3)
-        {
-	 if( Box_IntersectTriangle ( ray, tempHInfo, corners[indices[i]], corners[indices[i+1]], corners[indices[i+2]] ))
-	   {
-	    hitZ.push_back(tempHInfo);
-	      boxHit = true;
-	      tempHInfo.Init();
-	      tempHInfo.node = hInfo.node;
-	      tempHInfo.z = hInfo.z;
-	    }
-	  }
-         
-       ///std::cout<<"box hit z: "<<hitZ[0].z<<" " <<hitZ[1].z<<std::endl;
-       if(boxHit)
-	 {
-	   //std::cout<<"Box hit "<<hitZ.size()<<std::endl;
-	       int st = 0, end = 0;
-	       if( hitZ[0].z < hInfo.z && hitZ[1].z < hInfo.z ) {
-		 if( hitZ[0].z < hitZ[1].z ) { 
-		   st = 0; end = 1;
-		 }
-		 else {
-		   st = 1; end = 0;
-		 }
-	       }
-	       bool noData = false;
-	       hInfo.shade=RayMarch(ray, hInfo, hitZ[st], hitZ[end], noData);
-	       if(!noData) {
-	       //hInfo.p = hitZ[ci].p;
-	       //hInfo.N = hitZ[ci].N;
-		 hInfo.volume = false;
-	       //hInfo.node = hitZ[ci].node;
-	       //hInfo.z = hitZ[ci].z;
-	       hInfo.front =  true;
-	       }
-	       else boxHit = false; //no data (or) iso surface rendering
+       for(int i = 0; i < 36; i+=3){
+	 if( Box_IntersectTriangle ( ray, tempHInfo, corners[indices[i]], corners[indices[i+1]], corners[indices[i+2]] )){
+	   hitZ.push_back(tempHInfo);
+	   boxHit = true;
+	   tempHInfo.Init();
+	   tempHInfo.node = hInfo.node;
+	   tempHInfo.z = hInfo.z;
 	 }
-
+       }
+         
+       if(boxHit) {
+	 int st = 0, end = 0;
+	 if( hitZ[0].z < hInfo.z && hitZ[1].z < hInfo.z ) {
+	   if( hitZ[0].z < hitZ[1].z ) { 
+	     st = 0; end = 1;
+	   }
+	   else {
+	     st = 1; end = 0;
+	   }
+	 }
+	 bool noData = false;
+	 hInfo.shade=RayMarch(ray, hInfo, hitZ[st], hitZ[end], noData);
+	 /*hInfo.shade = Color(125,125,0);
+	   hInfo.volume = true;
+	   hInfo.z = hitZ[st].z;
+	   hInfo.N = hitZ[st].N;
+	   hInfo.p = hitZ[st].p;
+	   return boxHit;*/
+	 if(!noData) {
+	   //hInfo.volume = true;//false;
+	   hInfo.front =  true;
+	 }
+	 else boxHit = false; //no data (or) iso surface rendering
+       }
     return boxHit;
   }
   Color RayMarch(const Ray& ray, HitInfo &hInfo, HitInfo& start, HitInfo& end, bool &noData) const
   {
     Color shade = Color(125,125,0);
     float length = (float)end.z - start.z;
-    //    std::cout<<start.p.x<<" " <<start.p.y<<" "<<start.p.z<<std::endl;
-    //    std::cout<<end.p.x<<" " <<end.p.y<<" "<<end.p.z<<std::endl;
-    //    std::cout<<end.z<<" "<<start.z<<" " << std::endl;
     float dist = sqrt(std::pow((float)end.p.x - start.p.x, 2.0f) + pow((float)end.p.y - start.p.y, 2.0f) + pow((float)end.p.z - start.p.z,  2.0f));
-    shade = Color (dist/10, dist/10, 0.0);
 
-    //we know the ray. start the binning process- find which cell the current sample point is in, get the data points and average the color
+    /* //debug stuff
+       shade = Color (dist/10, dist/10, 0.0);
+       noData = false;
+       hInfo.p = start.p;
+       hInfo.z = start.z;
+       hInfo.renderIsoSurface = true;
+       hInfo.volume = true;
+       return shade;
+    */
+
+    /** Binning the sample point */
     Ray r;
     r.p = start.p;
     r.dir = end.p - start.p;
     r.Normalize();
-    float dt = (float)1.0 / (n_cells_x * 2.0); 
-    float t =0;
+    float dt = (float)1.0 / (xdim * 2.0); 
+    float t = 0;
     Point3 sample;
-    while ( t < dist )
-      {
-	sample = start.p + t * r.dir;
-	int cx=-1,cy=-1,cz=-1;
-	for(int x =0; x < n_cells_x; x++)
-	  {
-	    Cell c = Cells[x][0][0];
-	    if( CornerLocations[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z].x < sample.x && CornerLocations[c.Indices[7].x][c.Indices[7].y][c.Indices[7].z].x > sample.x)
-	      {
-		cx = x;
-		break;
-	      } 
-	  }
-	for(int y =0; y < n_cells_y; y++)
-	  {
-	    Cell c = Cells[0][y][0];
-	    if( CornerLocations[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z].y < sample.y && CornerLocations[c.Indices[7].x][c.Indices[7].y][c.Indices[7].z].y > sample.y)
-	      {
-		cy = y;
-		break;
-	      } 
-	    
-	  }
-	for(int z = 0; z < n_cells_z; z++)
-	  {
-	    Cell c = Cells[0][0][z];
-	    if( CornerLocations[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z].z < sample.z && CornerLocations[c.Indices[7].x][c.Indices[7].y][c.Indices[7].z].z > sample.z)
-	      {
-		cz = z;
-		break;
-	      } 
-	  }
-	if(cx >=0 && cy >=0 && cz >=0 )
-	  {
-      	     //    std::cout<<"chosen: "<<cx<<" " <<cy<<" " <<cz<< std::endl;
-	    float data_tot = TrilinearInterpolate(sample,cx,cy,cz);//SampleCell(cx,cy,cz);
-	    
-	    float THRESHOLD = 7000;
-	    if(data_tot > THRESHOLD) //ISo surface rendering
-	      {
-		//	 std::cout<<"Data: "<<data_tot<<std::endl;
-		hInfo.p = sample;
-		hInfo.N = EstimateGradient(cx,cy,cz);
-		hInfo.z += t;
-		hInfo.renderIsoSurface = true;
-		shade = Color(t,t,t);
-		//		std::cout<<"hinfo z: "<<hInfo.z<<std::endl;
-		return shade;
-	      }
-	  }	
-	t += dt;
+
+    while ( t < dist ) {
+      sample = start.p + t * r.dir;
+      int cx=-1,cy=-1,cz=-1;
+
+      for(int x=0; x < xdim -1; x++){
+	if(CornerPos[getIndex(x,0,0)].x < sample.x && CornerPos[getIndex(x+1,0,0)].x >= sample.x){
+	  cx = x;
+	  break;
+	}
+      }
 	
-      }//while loop
-    
+      for(int y=0; y < ydim-1; y++){
+	if(CornerPos[getIndex(0,y,0)].y < sample.y && CornerPos[getIndex(0,y+1,0)].y >= sample.y){
+	  cy = y;
+	  break;
+	}
+      }
+
+      for(int z=0; z < zdim-1; z++){
+	if(CornerPos[getIndex(0,0,z)].z < sample.z && CornerPos[getIndex(0,0,z+1)].z >= sample.z){
+	  cz = z;
+	  break;
+	}
+      }
+	
+      if(cx >=0 && cy >=0 && cz >=0 ){
+	float data_tot = TrilinearInterpolate(sample,cx,cy,cz);
+	float THRESHOLD = 13500;
+	if(data_tot > THRESHOLD){
+	  noData = false;
+	  hInfo.p = sample;
+	  hInfo.N = EstimateGradient(cx,cy,cz);
+	  hInfo.z += t;
+	  hInfo.renderIsoSurface = true;
+	  hInfo.volume = false;
+	  return shade;
+	}
+      }	
+      t += dt;
+	
+    }//while loop
     
     noData = true; //didnt find any data that meets the condition
-    //    shade = Color(data_tot, data_tot, data_tot);
-    
     return shade;
     
   }
@@ -320,19 +215,25 @@ class BoxObject : public Object
   }
   float TrilinearInterpolate(Point3 samplePt, int x, int y, int z) const
   {
-    Cell c = Cells[x][y][z];
+
     float data = 0;
     float xd, yd, zd;
     float c01, c23, c45, c67;
     float c0,c1;
     float val;
-    Point3 p1 =  CornerLocations[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z];
-    Point3 p2 = CornerLocations[c.Indices[7].x][c.Indices[7].y][c.Indices[7].z];
+    Point3 p1 =  CornerPos[getIndex(x,y,z)];
+    Point3 p2 = CornerPos[getIndex(x+1,y+1,z+1)];
     float* v = new float[8];
-    for(int i = 0; i < 8; i++){
-      //v[i] = DataPoints[c.Indices[i].x][c.Indices[i].y][c.Indices[i].z];
-      v[i] = us_dataPoints[getIndex(c.Indices[i].x,c.Indices[i].y,c.Indices[i].z)];
-    }
+
+    v[0] = us_dataPoints[getIndex(x,y,z)];
+    v[1] = us_dataPoints[getIndex(x+1,y,z)];
+    v[2] = us_dataPoints[getIndex(x,y+1,z)];
+    v[3] = us_dataPoints[getIndex(x+1,y+1,z)];
+    v[4] = us_dataPoints[getIndex(x+1,y,z+1)];
+    v[5] = us_dataPoints[getIndex(x,y,z+1)];
+    v[6] = us_dataPoints[getIndex(x,y+1,z+1)];
+    v[7] = us_dataPoints[getIndex(x+1,y+1,z+1)];
+
     xd = (samplePt.x - p1.x)/(p2.x - p1.x);
     yd = (samplePt.y - p1.y)/(p2.y - p1.y);
     zd = (samplePt.z - p1.z)/(p2.z - p1.z);
@@ -350,14 +251,8 @@ class BoxObject : public Object
   void CalculateGradients()
   {
     std::cout<<"Calculating Gradient differences ..."<<std::endl;
-    GradientDiffs.resize(xdim);
-    for(int i = 0; i < xdim; i++)
-      {
-	GradientDiffs[i].resize(ydim);
-	for(int j = 0; j < ydim; j++)
-	  GradientDiffs[i][j].resize(zdim);
-      }
 
+    Gradients.resize(this->_size);
     for (int z = 0; z < zdim; z++)
       {
 	for(int y=0;y<ydim;y++)
@@ -378,61 +273,26 @@ class BoxObject : public Object
 		if(z < zdim-1) zn = us_dataPoints[getIndex(x,y,z+1)];//DataPoints[x][y][z+1];
 		else zn = 0;
 		Point3 N =  Point3(xn - xp, yn - yp, zn - zp);
-		//N.Normalize();
-		GradientDiffs[x][y][z] = N;
-
+		Gradients[getIndex(x,y,z)] = N;
 	      }
 	  }
       }
-    /*
-    std::cout<<"Smoothing out ..."<<std::endl;
-    for (int z = 0; z < zdim; z++)
-      {
-	for(int y=0;y<ydim;y++)
-	  {
-	    for(int x=0; x<xdim;x++)
-	      {
-		Point3 xn, xp, yn, yp, zn, zp;
-		if(x > 0) xp = GradientDiffs[x-1][y][z];
-		else xp= Point3(0,0,0);
-		if(x < xdim-1) xn = GradientDiffs[x+1][y][z];
-		else xn = Point3(0,0,0);
-		if(y > 0) yp = GradientDiffs[x][y-1][z];
-		else  yp = Point3(0,0,0);
-		if(y < ydim-1) yn = GradientDiffs[x][y+1][z];
-		else yn = Point3(0,0,0);
-		if(z > 0) zp = GradientDiffs[x][y][z-1];
-		else zp= Point3(0,0,0);
-		if(z < zdim-1) zn = GradientDiffs[x][y][z+1];
-		else zn = Point3(0,0,0);
 
-		Point3 N = xn + xp + yn + yp + zn + zp;
-		N /= 6.0;
-		if(N.x != 0 && N.y!=0 && N.z!=0) N.Normalize();
-		GradientDiffs[x][y][z] = N;
+  }
 
-	      }
-	  }
-      }
-    */
-  }
-  //samples value of first data point for now -- testing
-  //will have to rewrite sample cell - estimate gradients needs a simple version but others require an interpolated version.
-  float SampleCell(int x, int y, int z) const
-  {
-    Cell c = Cells[x][y][z];
-    //       std::cout<<"sample: "<<x<<" "<<y<<" "<<z<<std::endl;
-    return us_dataPoints[getIndex(c.Indices[0].x,c.Indices[0].y,c.Indices[0].z)];//DataPoints[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z];
-  }
   Point3 EstimateGradient(int x, int y, int z) const
   {
-    Cell c = Cells[x][y][z];
-    Point3 grad = Point3(0,0,0);
-    for(int i = 0; i< 8; i++)
-      {
-	grad += GradientDiffs[c.Indices[i].x][c.Indices[i].y][c.Indices[i].z];
-	//grad = GradientDiffs[c.Indices[0].x][c.Indices[0].y][c.Indices[0].z];
-      }
+    /* maybe i can calculate this avg while calculating gradients; maybe needto trilinear interpolate gradient
+       as well */
+    Point3 grad = Gradients[getIndex(x,y,z)];
+    grad += Gradients[getIndex(x+1,y,z)];
+    grad += Gradients[getIndex(x,y+1,z)];
+    grad += Gradients[getIndex(x+1,y+1,z)];
+    grad += Gradients[getIndex(x+1,y,z+1)];
+    grad += Gradients[getIndex(x,y,z+1)];
+    grad += Gradients[getIndex(x,y+1,z+1)];
+    grad += Gradients[getIndex(x+1,y+1,z+1)];
+
     grad.x /= -8.0; grad.y /= -8.0; grad.z /= -8.0;
     if(grad.x != 0 && grad.y!= 0 && grad.z!=0)
       grad.Normalize();

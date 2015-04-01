@@ -32,9 +32,17 @@ histogram done
  -use these indices for gradients, data points
 
 3/30/2015 Monday
--check that old stuff works (works, but took 23 min for threshold of 7k!)
-       -git push + new branch
+#-check that old stuff works (works, but took 23 min for threshold of 7k!)
+       -git push + new branch (git push -u origin less-mem-attempt)
        -begin major refactoring (on the fly calc for binning)
        -old: 20n*float + n * int
        -new: 9n * float + n*int
--try removing index data  structures
+#-try removing index data  structures
+
+3/31/2015 Tuesday
+8:38 PM
+#-Fix new stuff (timings are great ~2 to 5min !!!!! ; mem~705MB; )
+-Ask Pascal or Liang about benchmarks for basic volume ray tracer.
+-finish volume ray tracer (iso, transfer function)
+
+

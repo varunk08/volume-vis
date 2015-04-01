@@ -1,8 +1,17 @@
 <xml>
     <scene>
-        <!-- Objects-->
+      <!-- Objects-->
+      
+      <object type="boxobject" name="volume-box" material="wallRed">
+<scale value="5"/>
+<rotate angle="-120" z="1"/>
+<rotate angle="-45" x="1"/>
+<rotate angle="-90" y="1"/>
+<translate y="0"  z="-30" />
+</object>
 
-<!--        <object name="box">
+<!--
+        <object name="box">
             <translate x="0" y="0" z="-50"/>
             <object type="plane" name="WallBack" material="wall">
                 <scale value="30"/>
@@ -44,16 +53,8 @@
             <rotate angle="30" y="1"/>
             <translate x="0" y="0" z="-40"/>
         </object>
-  -->
-<object type="boxobject" name="volume-box" material="wallRed">
-<scale value="5"/>
-<rotate angle="0" z="1"/>
-<rotate angle="80" x="-1"/>
-<rotate angle="60" y="-1"/>
-<translate y="0"  z="-40" />
-</object>
 
-<!--      <object type="obj" name="teapot_hi.obj" material="mtl1">
+      <object type="obj" name="teapot_hi.obj" material="mtl1">
             <scale value="0.3"/>
             <rotate angle="-90" x="1"/>
             <translate x="0" y="-10" z="-35"/>
@@ -106,8 +107,13 @@
         </light>
         <light type="point" name="pointLight">
             <intensity value="0.5"/>
-            <position x="0" y="8" z="-30"/>
+            <position x="0" y="8" z="-25"/>
         </light>
+	<light type="point" name="pointLight_2">
+            <intensity value="0.5"/>
+            <position x="-8" y="-8" z="-25"/>
+        </light>
+
 <!--<light type="point" name="pointLight2">
 <intensity value="0.3"/>
 <position x="10" y="5" z="-35"/>
