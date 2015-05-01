@@ -90,8 +90,7 @@ void BeginRender()
       if(rootNode.GetNumChild()>0){
 	if(RayTrace_2(r, hitInfo)) {
 	  pixelHit=true;
-	  if(hitInfo.volume)// &&  hitInfo.renderIsoSurface == false) //Volume is hit AND not shading surface then use color
-	    {
+	  if(hitInfo.volume) {
 	      shade = hitInfo.shade;
 	    }
 	  else{ //might render ISO surface
@@ -110,7 +109,7 @@ void BeginRender()
     K.x += dxx;
     K.y += dy;
   }
-  cout<<"Render Complete"<<endl;
+  cout<<"Render Complete.\n"<<endl;
   renderImage.ComputeZBufferImage();
   renderImage.SaveZImage("images/zbuffer.ppm");
   renderImage.SaveImage("images/renderimage.ppm");
@@ -483,27 +482,45 @@ int main(int argc, char* argv[])
   //  int xdim = 400, ydim = 296, zdim = 352; //walnut
   //  int xdim = 512, ydim = 512, zdim = 134; char* datafile="data/Pig.raw";// Pig.raw
   //  int xdim = 512,ydim=512,zdim=63; char* datafile = "data/Teddy_512x512x63.raw";//teddy
-  //   int xdim = 256,ydim=256,zdim=161; char* datafile = "data/Tooth_256x256x161.raw";//tooth
+  //  int xdim = 256,ydim=256,zdim=161; char* datafile = "data/Tooth_256x256x161.raw";//tooth
   //  int xdim = 256,ydim=256,zdim=512; char* datafile = "data/Carp_256x256x512.raw";//Carp
-    int xdim = 512, ydim=512,zdim=106; char* datafile = "data/Cadhead_512x512x106.raw";//Cad head
+  //  int xdim = 512, ydim=512,zdim=106; char* datafile = "data/Cadhead_512x512x106.raw";//Cad head
+  //  int xdim = 256,ydim=256,zdim=109; char* datafile = "data/MRIwoman_256x256x109.raw";//MRI woman
+  int xdim = 256,ydim=256,zdim=128; char* datafile = "data/engine_256x256x128.raw"; //Engine 8-bit
+  //  int xdim = 256,ydim=256,zdim=256; char* datafile = "data/bonsai_256x256x256.raw";
+  //  int xdim = 256,ydim=256,zdim=113; char* datafile = "data/CThead_256x256x113.raw";
+  //  int xdim = 256,ydim=256,zdim=178; char* datafile = "data/Teapot_256x256x178.raw";
+  //   int xdim = 256,ydim=256,zdim=256; char* datafile = "data/foot_8bit_256x256x256.raw";
+  const char* tf_filename = "data/engine_tf1.1dt";
+  const char* filename = "scene.xml";
+  uchar* volumeData = NULL;
+  Color* color_tf = NULL;
+  float* alpha_tf = NULL;
+  VolumeData DataLoader;
+  int tf_size = 0;
+  uchar minData, maxData;
+  LoadScene(filename);
+  if(DataLoader.Load(datafile, xdim, ydim, zdim, &volumeData) && DataLoader.LoadTF(tf_filename) ){
+    std::cout<<"Loaded data file: "<<datafile<<std::endl;
+    
+    theBoxObject.SetDimensions(xdim, ydim, zdim);
+    theBoxObject.SetData(volumeData);
+    theBoxObject.CalculateGradients();
+    DataLoader.GetTransferFunction( &color_tf, &alpha_tf, tf_size, minData, maxData );
+    theBoxObject.SetTransferFunction(color_tf, alpha_tf, tf_size, minData, maxData);
 
-    const char* filename = "scene.xml";
-    unsigned short* volumeData = NULL;
-    LoadScene(filename);
-    if( LoadVolumeData(datafile, xdim, ydim, zdim, &volumeData) ){
-	theBoxObject.SetDimensions(xdim, ydim, zdim);
-      	theBoxObject.SetData(volumeData);
-	theBoxObject.CalculateGradients();
-	volumeData = NULL;
-      }
-    else{
-      std::cout<<"Failure to load data file"<<std::endl;
-      return -1;;
-    }
+    volumeData = NULL;
+    color_tf = NULL;
+    alpha_tf = NULL;
+  }
+  else{
+    std::cout<<"Failure to load data file"<<std::endl;
+    return -1;;
+  }
 
-    glutInit(&argc,argv);
-    ShowViewport();
+  glutInit(&argc,argv);
+  ShowViewport();
 
-    return 0;
+  return 0;
 }
 

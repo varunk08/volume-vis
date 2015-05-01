@@ -2,7 +2,7 @@ CC:= clang++
 OBJS:= main.o scene.o threadpool.o viewport.o xmlload.o tinyxml.o tinystr.o tinyxmlparser.o tinyxmlerror.o volumedata.o
 INCLUDES:= -I ./tinyxml/ -I .
 LDFLAGS:= -v -std=c++11  -stdlib=libstdc++  -framework Carbon -framework OpenGL -framework GLUT
-CXXFLAGS:= -std=c++11  -Wall -c ${INCLDUES} -g
+CXXFLAGS:= -std=c++11 -stdlib=libstdc++  -Wall -c ${INCLDUES} -g
 
 all: ${OBJS} 
 	${CC} ${LDFLAGS} $^ -o raytracer
@@ -26,4 +26,3 @@ tinyxmlerror.o: tinyxml/tinyxmlerror.cpp
 clean:
 	rm -f *.o;
 	rm raytracer
-	

@@ -23,7 +23,6 @@ histogram done
 -add more lights
 
 3/29/2015 Sunday
-
 -work on setting color and alpha values to bins
 -work on removing index data structure
  -iterate through the corner locations 
@@ -40,9 +39,30 @@ histogram done
 #-try removing index data  structures
 
 3/31/2015 Tuesday
-8:38 PM
-#-Fix new stuff (timings are great ~2 to 5min !!!!! ; mem~705MB; )
+8:38 PM - 11:30 PM
+#-Fix new stuff (timings are great !!!!! ; mem~705MB; )
 -Ask Pascal or Liang about benchmarks for basic volume ray tracer.
 -finish volume ray tracer (iso, transfer function)
 
+Post-classification
+	- The densities and the gradients are interpolated
+	- The color and opacity values are assigned to the sample points based on the transfer function
+        - The sample points are shaded based on the interpolated gradients
 
+4/3/2015 Friday
+-Color and alpha function: compositing algorithm
+
+list of positive datasets:
+-bonsai
+-engine
+-teapot
+
+4/6/2015 Tuesday
+
+Create test renderings to show results during meeting.
+Fix the foot iso surface rendering;
+
+4/30/2015 Thursday
+LOL!! Haven't worked on this for so long. Haven't worked on anything for so long. What a waste of time.
+
+Next: get transfer functions working.

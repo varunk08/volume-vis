@@ -9,6 +9,8 @@
 #include <GLUT/GLUT.h>
 #include "objects.h"
 #include "scene.h"
+#include "cyColor.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -18,11 +20,15 @@ class BoxObject : public Object
   Point3 pmin;
   Point3 pmax;
   int xdim, ydim, zdim, _size;
-
+  int tf_size;
   vector<Point3> CornerPos;
   vector<Point3> Gradients;
-  unsigned short* us_dataPoints;
-
+  uchar* us_dataPoints;
+  Color* p_colortf;
+  float* p_alphatf;
+  uchar minData;
+  uchar maxData;
+  
  public:
   BoxObject()
     {
@@ -63,7 +69,7 @@ class BoxObject : public Object
 
   }
 
-  void SetData(unsigned short* theData)
+  void SetData(uchar* theData)
   {
     this->us_dataPoints = theData;
     return;
@@ -162,7 +168,9 @@ class BoxObject : public Object
     float dt = (float)1.0 / (xdim * 2.0); 
     float t = 0;
     Point3 sample;
-
+    cyColor color_acc = cyColor(0,0,0);
+    float alpha_acc = 0.0f;
+    
     while ( t < dist ) {
       sample = start.p + t * r.dir;
       int cx=-1,cy=-1,cz=-1;
@@ -190,17 +198,40 @@ class BoxObject : public Object
 	
       if(cx >=0 && cy >=0 && cz >=0 ){
 	float data_tot = TrilinearInterpolate(sample,cx,cy,cz);
-	float THRESHOLD = 13500;
-	if(data_tot > THRESHOLD){
-	  noData = false;
-	  hInfo.p = sample;
-	  hInfo.N = EstimateGradient(cx,cy,cz);
-	  hInfo.z += t;
-	  hInfo.renderIsoSurface = true;
-	  hInfo.volume = false;
-	  return shade;
-	}
-      }	
+	bool compositing = true;
+	if( compositing ){
+	  cyColor cin = GetColor(data_tot);
+	  float ain = GetAlpha(data_tot);
+	  //color accumulation; cacc += (1-opacc)*color*opacity;
+	  color_acc += (1 - alpha_acc) * cin * ain;
+	  //alpha accumulation; opacc += (1- opacc)*opacity;
+	  alpha_acc += (1 - alpha_acc) * ain;
+	  /*compositing*/
+	  if( alpha_acc > 0.9 ){
+	    noData = false;
+	    hInfo.p = sample;
+	    hInfo.N = EstimateGradient(cx, cy, cz);
+	    hInfo.z += t;
+	    hInfo.renderIsoSurface = false;
+	    hInfo.volume = true;
+	    shade = color_acc;
+	    return shade;
+	  }
+	}//compositing
+	else {
+	  /*iso surface rendering*/
+	  float THRESHOLD = 80;
+	  if( data_tot > THRESHOLD ) {
+	    noData = false;
+	    hInfo.p = sample;
+	    hInfo.N = EstimateGradient(cx,cy,cz);
+	    hInfo.z += t;
+	    hInfo.renderIsoSurface = true;
+	    hInfo.volume = false;
+	    return shade;
+	  }
+	}//iso surface rendering
+      }//valid indices cx, cy, cz
       t += dt;
 	
     }//while loop
@@ -208,6 +239,29 @@ class BoxObject : public Object
     noData = true; //didnt find any data that meets the condition
     return shade;
     
+  }
+  
+  Color GetColor(float density) const
+  {
+    int index = (density - (uint)minData)/((uint)maxData-(uint)minData) * 255;
+    return p_colortf[index];
+  }
+  
+  float GetAlpha(float density) const
+  {
+    /*hard coded bin size of 1000 for now*/
+    int index = (density - (uint)minData)/((uint)maxData-(uint)minData) * 255;
+    return p_alphatf[index];
+    
+  }
+  void SetTransferFunction(Color*  color_tf, float* alpha_tf, int n_bins, uchar &min, uchar  &max)
+  {
+    this->p_colortf = color_tf;
+    this->p_alphatf = alpha_tf;
+    this->tf_size = n_bins;
+    this->minData = min;
+    this->maxData = max;
+
   }
   inline int getIndex(int x, int y, int z) const
   {
@@ -225,14 +279,14 @@ class BoxObject : public Object
     Point3 p2 = CornerPos[getIndex(x+1,y+1,z+1)];
     float* v = new float[8];
 
-    v[0] = us_dataPoints[getIndex(x,y,z)];
-    v[1] = us_dataPoints[getIndex(x+1,y,z)];
-    v[2] = us_dataPoints[getIndex(x,y+1,z)];
-    v[3] = us_dataPoints[getIndex(x+1,y+1,z)];
-    v[4] = us_dataPoints[getIndex(x+1,y,z+1)];
-    v[5] = us_dataPoints[getIndex(x,y,z+1)];
-    v[6] = us_dataPoints[getIndex(x,y+1,z+1)];
-    v[7] = us_dataPoints[getIndex(x+1,y+1,z+1)];
+    v[0] = (unsigned int)us_dataPoints[getIndex(x,y,z)];
+    v[1] = (unsigned int)us_dataPoints[getIndex(x+1,y,z)];
+    v[2] = (unsigned int)us_dataPoints[getIndex(x,y+1,z)];
+    v[3] = (unsigned int)us_dataPoints[getIndex(x+1,y+1,z)];
+    v[4] = (unsigned int)us_dataPoints[getIndex(x+1,y,z+1)];
+    v[5] =(unsigned int) us_dataPoints[getIndex(x,y,z+1)];
+    v[6] =(unsigned int) us_dataPoints[getIndex(x,y+1,z+1)];
+    v[7] =(unsigned int) us_dataPoints[getIndex(x+1,y+1,z+1)];
 
     xd = (samplePt.x - p1.x)/(p2.x - p1.x);
     yd = (samplePt.y - p1.y)/(p2.y - p1.y);
@@ -260,17 +314,17 @@ class BoxObject : public Object
 	    for(int x=0; x<xdim;x++)
 	      {
 		float xn, xp, yn, yp, zn, zp;
-		if(x > 0) xp = us_dataPoints[getIndex(x-1,y,z)];//DataPoints[x-1][y][z];
+		if(x > 0) xp = (uint)us_dataPoints[getIndex(x-1,y,z)];//DataPoints[x-1][y][z];
 		else xp=0;
-		if(x < xdim-1) xn = us_dataPoints[getIndex(x+1,y,z)];//DataPoints[x+1][y][z];
+		if(x < xdim-1) xn = (uint)us_dataPoints[getIndex(x+1,y,z)];//DataPoints[x+1][y][z];
 		else xn = 0;
-		if(y > 0) yp = us_dataPoints[getIndex(x,y-1,z)];//DataPoints[x][y-1][z];
+		if(y > 0) yp = (uint)us_dataPoints[getIndex(x,y-1,z)];//DataPoints[x][y-1][z];
 		else  yp = 0;
-		if(y < ydim-1) yn = us_dataPoints[getIndex(x,y+1,z)];//DataPoints[x][y+1][z];
+		if(y < ydim-1) yn = (uint)us_dataPoints[getIndex(x,y+1,z)];//DataPoints[x][y+1][z];
 		else yn = 0;
-		if(z > 0) zp = us_dataPoints[getIndex(x,y,z-1)];//DataPoints[x][y][z-1];
+		if(z > 0) zp = (uint)us_dataPoints[getIndex(x,y,z-1)];//DataPoints[x][y][z-1];
 		else zp=0;
-		if(z < zdim-1) zn = us_dataPoints[getIndex(x,y,z+1)];//DataPoints[x][y][z+1];
+		if(z < zdim-1) zn = (uint)us_dataPoints[getIndex(x,y,z+1)];//DataPoints[x][y][z+1];
 		else zn = 0;
 		Point3 N =  Point3(xn - xp, yn - yp, zn - zp);
 		Gradients[getIndex(x,y,z)] = N;
