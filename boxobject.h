@@ -11,6 +11,7 @@
 #include "scene.h"
 #include "cyColor.h"
 #include "utils.h"
+#include "cyMatrix3.h"
 
 using namespace std;
 
@@ -28,7 +29,9 @@ class BoxObject : public Object
   float* p_alphatf;
   uchar minData;
   uchar maxData;
-  
+  LightList lights;
+  Matrix3 tm, itm;
+  Point3 worldPos;
  public:
   BoxObject()
     {
@@ -39,6 +42,22 @@ class BoxObject : public Object
   {
     return Box(-1,-1,-1,1,1,1);
   }
+  void SetTransform(const Matrix3 &nodeToWorld, const Matrix3 &n2w_itm, const Point3 &pos ){
+    this->tm.Set(nodeToWorld.data);
+    this->itm.Set(n2w_itm.data);
+    this->worldPos = Point3(pos);
+  }
+  Point3 TransposeMult( const Matrix3 &m, const Point3 &dir ) const
+	{
+		Point3 d;
+		d.x = m.GetColumn(0) % dir;
+		d.y = m.GetColumn(1) % dir;
+		d.z = m.GetColumn(2) % dir;
+		return d;
+	}
+
+  Point3 TransformFrom( const Point3 &p ) const { return (tm) * (p) + worldPos; }	// Transform from the local coordinate system
+  Point3 VectorTransformFrom( const Point3 &dir ) const { return TransposeMult(itm,dir); }
   void SetDimensions(int xdim, int ydim, int zdim)
   {
     this->xdim = xdim;
@@ -69,8 +88,9 @@ class BoxObject : public Object
 
   }
 
-  void SetData(uchar* theData)
+  void SetData(uchar* theData, LightList &_lightList)
   {
+    this->lights = _lightList;
     this->us_dataPoints = theData;
     return;
   }
@@ -146,7 +166,7 @@ class BoxObject : public Object
   }
   Color RayMarch(const Ray& ray, HitInfo &hInfo, HitInfo& start, HitInfo& end, bool &noData) const
   {
-    Color shade = Color(125,125,0);
+    Color shade = Color(0,0,0);
     float length = (float)end.z - start.z;
     float dist = sqrt(std::pow((float)end.p.x - start.p.x, 2.0f) + pow((float)end.p.y - start.p.y, 2.0f) + pow((float)end.p.z - start.p.z,  2.0f));
 
@@ -165,12 +185,13 @@ class BoxObject : public Object
     r.p = start.p;
     r.dir = end.p - start.p;
     r.Normalize();
-    float dt = (float)1.0 / (xdim * 2.0); 
+    float dt = (float)dist / (xdim * 2.0); 
     float t = 0;
     Point3 sample;
     cyColor color_acc = cyColor(0,0,0);
     float alpha_acc = 0.0f;
-    
+    int num_iter = 0;
+    noData = true;
     while ( t < dist ) {
       sample = start.p + t * r.dir;
       int cx=-1,cy=-1,cz=-1;
@@ -197,25 +218,31 @@ class BoxObject : public Object
       }
 	
       if(cx >=0 && cy >=0 && cz >=0 ){
+	num_iter++;
 	float data_tot = TrilinearInterpolate(sample,cx,cy,cz);
 	bool compositing = true;
 	if( compositing ){
-	  cyColor cin = GetColor(data_tot);
-	  float ain = GetAlpha(data_tot);
-	  //color accumulation; cacc += (1-opacc)*color*opacity;
+
+	   Point3 P = sample;
+	   Point3 N = EstimateGradient(cx, cy, cz);
+	   cyColor cin = DoPhongShading(ray, P, N, GetColor(data_tot));
+	   float ain = GetAlpha(data_tot);
+
+	   //color accumulation; cacc += (1-opacc)*color*opacity;
+	  //Do phong shading
 	  color_acc += (1 - alpha_acc) * cin * ain;
 	  //alpha accumulation; opacc += (1- opacc)*opacity;
 	  alpha_acc += (1 - alpha_acc) * ain;
 	  /*compositing*/
-	  if( alpha_acc > 0.9 ){
+	    hInfo.p = P;
+	    hInfo.N = N;
 	    noData = false;
-	    hInfo.p = sample;
-	    hInfo.N = EstimateGradient(cx, cy, cz);
 	    hInfo.z += t;
-	    hInfo.renderIsoSurface = false;
 	    hInfo.volume = true;
 	    shade = color_acc;
-	    return shade;
+
+	  if( alpha_acc > 0.9 ){
+	    return shade;//break;
 	  }
 	}//compositing
 	else {
@@ -236,11 +263,68 @@ class BoxObject : public Object
 	
     }//while loop
     
-    noData = true; //didnt find any data that meets the condition
+    //noData = true; //didnt find any data that meets the condition
+    //    shade = Color(125,125,0);
     return shade;
     
   }
-  
+
+  /*Shading needs: ray, lights, colors(amb, diff, spec)*/
+  /*Lights are in world coords!! */
+  Color DoPhongShading(const Ray &ray,const Point3 &pt, const Point3 &norm, Color preCol) const
+  {
+    /*
+Increase ambient
+Fix specular
+*/
+    Color shade;
+    float amp = 3.0;
+    Color ambComponent = Color(0,0,0);
+    Color diffuse = amp *  preCol;
+    Color specular = Color(0.7f,0.7f,0.7f);
+    Color ambInt =  amp * preCol;
+    Color allOther = Color(0,0,0);
+    float glossiness = 20.0f;    
+    Point3 P = TransformFrom(pt);
+    Point3 N = VectorTransformFrom(norm);
+    N.Normalize();
+    for ( unsigned int i=0; i<lights.size(); i++ ) {
+        if(lights[i]->IsAmbient()){
+            Color intensity = lights[i]->Illuminate(P);
+            ambComponent += (ambInt * intensity);
+            continue;
+        }
+        else{
+            Point3 L = -lights[i]->Direction(P);
+            L.Normalize();
+            
+            Point3 V = TransformFrom(ray.p) - P;
+            V.Normalize();
+            
+            Point3 LplusV = L + V;
+            Point3 H = (L+V)/LplusV.Length();
+            H.Normalize();
+
+	    float costheta = L.Dot(N)/(L.Length() * N.Length());
+            float alpha = glossiness;
+
+	    float S = N.Dot(H);
+	    S = (S > 0)?S:0.0f; //max
+            S = pow( (float)S , alpha );
+
+            Color intensity = lights[i]->Illuminate(P);
+            allOther += intensity *  ((costheta>0?costheta:0)  * diffuse) + (S * specular);
+        }
+        /* finally add inta*cola + intall*costheta*(cold + s* colS)*/
+        shade = ambComponent  + allOther;
+    }
+
+    return shade;
+  }
+  void SetTransformedLights(LightList objCoordLights)
+  {
+    this->lights = objCoordLights;
+  }
   Color GetColor(float density) const
   {
     int index = (density - (uint)minData)/((uint)maxData-(uint)minData) * 255;

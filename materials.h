@@ -23,6 +23,7 @@ public:
 	MtlBlinn() : diffuse(0.5f,0.5f,0.5f), specular(0.7f,0.7f,0.7f), glossiness(20.0f),
     reflection(0,0,0), refraction(0,0,0), absorption(0,0,0), ior(1) {}
 	virtual Color Shade(const Ray &ray, const HitInfo &hInfo, const LightList &lights, int bounceCount) const;
+	virtual Color VolumeShade(const Ray &ray, const HitInfo &hInfo, const LightList &lights, Color color) const;
     void SetDiffuse(Color dif) { diffuse = dif; }
 	void SetSpecular(Color spec) { specular = spec; }
 	void SetGlossiness(float gloss) { glossiness = gloss; }

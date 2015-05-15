@@ -207,6 +207,11 @@ void LoadNode(Node *parent, TiXmlElement *element, int level)
         }
     }
     LoadTransform( node, element, level );
+
+    if(COMPARE(type,"boxobject"))      {
+      printf("---setting transform---:");
+      node->SetObjTransform();
+    }
     
 }
 

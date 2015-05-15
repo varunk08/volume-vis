@@ -32,8 +32,8 @@ public:
             name[n] = '\0';
         } else { name = NULL; }
     };
-   
-    
+    void SetTransform(const Matrix3 &nodeToWorld, const Matrix3 &itm,  const Point3 &pos){}   ;
+
     bool IntersectRay( const Ray &ray, HitInfo& hInfo, int hitSide=HIT_FRONT )const
     {
         bool hit = false;

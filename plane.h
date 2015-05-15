@@ -32,7 +32,7 @@ public:
         } else { name = NULL; }
     };
     Box GetBoundBox() const { return Box(-1,-1,0,1,1,0); }
-    
+    void SetTransform(const Matrix3 &nodeToWorld,const Matrix3 &itm, const Point3 &pos) {}
     bool IntersectRay( const Ray &ray, HitInfo& hInfo, int hitSide=HIT_FRONT )const
     {
         

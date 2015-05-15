@@ -24,6 +24,7 @@ public:
             name[n] = '\0';
         } else { name = NULL; }
     }
+    void SetTransform(const Matrix3 &nodeToWorld, const Matrix3 &itm,  const Point3 &pos){}
     Box GetBoundBox() const { return Box(-1,-1,-1,1,1,1); }    
     bool IntersectRay( const Ray &ray, HitInfo& hInfo, int hitSide=HIT_FRONT )const
     {

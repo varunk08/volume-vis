@@ -1,4 +1,3 @@
-
 //-------------------------------------------------------------------------------
 ///
 /// \file       scene.h
@@ -137,7 +136,7 @@ struct HitInfo
   Color shade;
   bool volume;
   bool renderIsoSurface;
-	HitInfo() { Init(); }
+  HitInfo() { Init(); }
   void Init() { z=BIGFLOAT; node=NULL; front=true; volume=false; shade=Color(0.0, 255.0, 0.0); renderIsoSurface=false;}
 };
 
@@ -248,6 +247,7 @@ public:
 	virtual bool IntersectRay( const Ray &ray, HitInfo &hInfo, int hitSide=HIT_FRONT ) const=0;
 	virtual Box  GetBoundBox() const=0;
 	virtual void ViewportDisplay() const {}	// used for OpenGL display
+	virtual void SetTransform(const Matrix3 &nodeToWorld,const Matrix3 &itm, const Point3 &pos) =0;
 	//	virtual Color RayMarch(const Ray& ray, HitInfo& hInfo) const {}
 };
 
@@ -276,7 +276,7 @@ public:
 	// hInfo: hit information for the point that is being shaded, lights: the light list,
 	// bounceCount: permitted number of additional bounces for reflection and refraction.
 	virtual Color Shade(const Ray &ray, const HitInfo &hInfo, const LightList &lights, int bounceCount) const=0;
-    
+	virtual Color VolumeShade(const Ray &ray, const HitInfo &hInfo, const LightList &lights, Color preCol) const{}
 	virtual void SetViewportMaterial() const {}	// used for OpenGL display
 };
 
@@ -297,9 +297,9 @@ private:
 	Material *mtl;				// Material used for shading the object
 	Box childBoundBox;			// Bounding box of the child nodes, which does not include the object of this node, but includes the objects of the child nodes
 public:
-	Node() : child(NULL), numChild(0), obj(NULL), mtl(NULL) {}
+ Node() : child(NULL), numChild(0), obj(NULL), mtl(NULL), volume(false) {}
 	~Node() { DeleteAllChildNodes(); }
-    
+	bool volume;
 	void Init() { DeleteAllChildNodes(); obj=NULL; mtl=NULL; childBoundBox.Init(); SetName(NULL); InitTransform(); } // Initialize the node deleting all child nodes
     
 	// Hierarchy management
@@ -346,7 +346,10 @@ public:
 	const Object*	GetObject() const { return obj; }
 	Object*			GetObject() { return obj; }
 	void			SetObject(Object *object) { obj=object; }
-    
+	void SetObjTransform(){
+	  printf("setting transform in node");
+	  obj->SetTransform(GetTransform(), GetInverseTransform(), GetPosition());
+	}
 	// Material management
 	const Material* GetMaterial() const { return mtl; }
 	void			SetMaterial(Material *material) { mtl=material; }

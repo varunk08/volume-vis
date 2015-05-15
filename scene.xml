@@ -3,8 +3,8 @@
       <!-- Objects-->
       
       <object type="boxobject" name="volume-box" material="wallRed">
-<scale value="2"/>
-<rotate angle="0" z="1"/>
+<scale value="3"/>
+<rotate angle="180" z="1"/>
 <rotate angle="0" x="1"/>
 <rotate angle="120" y="1"/>
 <translate y="0"  z="-5" />
@@ -103,18 +103,14 @@
         
         <!-- Lights -->
         <light type="ambient" name="ambientLight">
-            <intensity value="0.1"/>
+            <intensity value="0.4"/>
         </light>
         <light type="point" name="pointLight">
-            <intensity value="0.5"/>
-            <position x="0" y="8" z="-3"/>
+            <intensity value="0.7"/>
+            <position x="0" y="6" z="0"/>
         </light>
-	<!--
-	    <light type="point" name="pointLight_2">
-            <intensity value="0.5"/>
-            <position x="-8" y="-8" z="-25"/>
-          </light>
-	 -->
+
+
     </scene>
     
     <camera>

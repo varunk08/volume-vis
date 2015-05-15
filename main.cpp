@@ -91,7 +91,8 @@ void BeginRender()
 	if(RayTrace_2(r, hitInfo)) {
 	  pixelHit=true;
 	  if(hitInfo.volume) {
-	      shade = hitInfo.shade;
+	    //shade = hitInfo.node->GetMaterial()->VolumeShade(r, hitInfo, lights, hitInfo.shade);
+	    shade = hitInfo.shade;
 	    }
 	  else{ //might render ISO surface
 	    //if(hitInfo.renderIsoSurface) std::cout<<"shading iso"<<std::endl;
@@ -184,7 +185,49 @@ bool Box::IntersectRay(const Ray &ray, float t_max) const
     return tmax>=tmin;
     
 }
+Color MtlBlinn::VolumeShade(const Ray &ray, const HitInfo &hInfo, const LightList &lights, Color preCol) const
+{
+      Color shade;
 
+    Color ambComponent = Color(0,0,0);
+    Color diffuse = preCol;
+    Color specular = Color(0.7f,0.7f,0.7f);
+    Color ambInt = preCol;
+    Color allOther = Color(0,0,0);
+    float glossiness = 20.0f;    
+    Point3 P = Point3(hInfo.p);
+    for ( unsigned int i=0; i<lights.size(); i++ ) {
+        if(lights[i]->IsAmbient()){
+            Color intensity = lights[i]->Illuminate(hInfo.p);
+            ambComponent += (ambInt * intensity);
+            continue;
+        }
+        else{
+            Point3 L = -lights[i]->Direction(P);
+            L.Normalize();
+            
+            Point3 V = ray.p - P;
+            V.Normalize();
+            
+            Point3 LplusV = L + V;
+            Point3 H = (L+V)/LplusV.Length();
+            H.Normalize();
+            
+            float alpha = glossiness;
+            Point3 N = hInfo.N;
+            float S = H.Dot(N);
+            S = pow((float)S,alpha);
+            float costheta = L.Dot(N)/(L.Length() * N.Length());
+            Color intensity = lights[i]->Illuminate(P);
+            allOther += intensity * (costheta>0?costheta:0)  * (diffuse + S * (specular)) ;
+        }
+        /* finally add inta*cola + intall*costheta*(cold + s* colS)*/
+        shade = ambComponent  + allOther;
+    }
+
+    return shade;
+
+}
 Color MtlBlinn::Shade(const Ray &ray, const HitInfo &hInfo, const LightList &lights, int bounceCount) const{
     float bias = BIAS_SHADING;
     Color shade;
@@ -486,13 +529,20 @@ int main(int argc, char* argv[])
   //  int xdim = 256,ydim=256,zdim=512; char* datafile = "data/Carp_256x256x512.raw";//Carp
   //  int xdim = 512, ydim=512,zdim=106; char* datafile = "data/Cadhead_512x512x106.raw";//Cad head
   //  int xdim = 256,ydim=256,zdim=109; char* datafile = "data/MRIwoman_256x256x109.raw";//MRI woman
-  int xdim = 256,ydim=256,zdim=128; char* datafile = "data/engine_256x256x128.raw"; //Engine 8-bit
+  //int xdim = 256,ydim=256,zdim=128; char* datafile = "data/engine_256x256x128.raw"; //Engine 8-bit
   //  int xdim = 256,ydim=256,zdim=256; char* datafile = "data/bonsai_256x256x256.raw";
   //  int xdim = 256,ydim=256,zdim=113; char* datafile = "data/CThead_256x256x113.raw";
   //  int xdim = 256,ydim=256,zdim=178; char* datafile = "data/Teapot_256x256x178.raw";
-  //   int xdim = 256,ydim=256,zdim=256; char* datafile = "data/foot_8bit_256x256x256.raw";
-  const char* tf_filename = "data/engine_tf1.1dt";
+    int xdim = 256,ydim=256,zdim=256; char* datafile = "data/foot_8bit_256x256x256.raw";
+  //       int xdim = 128,ydim=256,zdim=256; char* datafile = "data/VisMale_128x256x256.raw";
+  //         int xdim = 256,ydim=256,zdim=256; char* datafile = "data/Engine_256x256x256.raw";
+
+  //const char* tf_filename = "data/engine_tf1.1dt";
+    const char* tf_filename = "data/foot_2.1dt";
+  //const char* tf_filename = "data/VisMale_128x256x256.1dt";
+    //  const char* tf_filename = "data/Engine_256x256x256.1dt";
   const char* filename = "scene.xml";
+  
   uchar* volumeData = NULL;
   Color* color_tf = NULL;
   float* alpha_tf = NULL;
@@ -502,9 +552,8 @@ int main(int argc, char* argv[])
   LoadScene(filename);
   if(DataLoader.Load(datafile, xdim, ydim, zdim, &volumeData) && DataLoader.LoadTF(tf_filename) ){
     std::cout<<"Loaded data file: "<<datafile<<std::endl;
-    
     theBoxObject.SetDimensions(xdim, ydim, zdim);
-    theBoxObject.SetData(volumeData);
+    theBoxObject.SetData(volumeData, lights);
     theBoxObject.CalculateGradients();
     DataLoader.GetTransferFunction( &color_tf, &alpha_tf, tf_size, minData, maxData );
     theBoxObject.SetTransferFunction(color_tf, alpha_tf, tf_size, minData, maxData);
