@@ -1,6 +1,6 @@
 #include "tinyxml/tinyxml.h"
-#include <GLUT/GLUT.h>
-#include "viewport.h"
+//#include <GLUT/GLUT.h>
+//#include "viewport.h"
 #include "utils.h"
 #include "scene.h"
 #include "xmlload.h"
@@ -567,8 +567,8 @@ int main(int argc, char* argv[])
     return -1;;
   }
 
-  glutInit(&argc,argv);
-  ShowViewport();
+  //glutInit(&argc,argv);
+  //ShowViewport();
 
   return 0;
 }

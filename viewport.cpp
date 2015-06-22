@@ -117,7 +117,7 @@ void ShowViewport()
     glEnable(GL_NORMALIZE);
     
     glLineWidth(2);
-
+    //hack to start the application
     GlutKeyboard(' ', 0, 0);
     glutMainLoop();
 }
