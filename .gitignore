@@ -1,3 +1,7 @@
 #Ignore all emacs backup files
 *~
 *#
+GPATH
+GTAGS
+GRTAGS
+tags

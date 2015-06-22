@@ -63,6 +63,18 @@ Create test renderings to show results during meeting.
 Fix the foot iso surface rendering;
 
 4/30/2015 Thursday
-LOL!! Haven't worked on this for so long. Haven't worked on anything for so long. What a waste of time.
+Haven't worked on this for so long. Haven't worked on anything for so long. What a waste of time.
 
 Next: get transfer functions working.
+
+5/15/2015 Friday
+Transfer functions working
+Now: reading Legion materials
+
+6/22/2015 Monday
+Next: ray tracer in legion
+attempted setting up in CADE:
+legion OK
+ray tracer FAIL
+
+
