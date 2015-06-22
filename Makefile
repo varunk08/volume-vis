@@ -1,28 +1,23 @@
 CC:= g++
-OBJS:= main.o scene.o threadpool.o xmlload.o tinyxml.o tinystr.o tinyxmlparser.o tinyxmlerror.o volumedata.o
+BIN:=./bin
+SRC:= $(wildcard src/*.cpp) $(wildcard src/tinyxml/*.cpp)
+OBJECT_FILES:=$(SRC:$(notdir %.cpp)=$(BIN)/$(notdir %.o))
+EXECUTABLES:=$(BIN)/raytracer
 INCLUDES:= -I ./tinyxml/ -I .
 LDFLAGS:= -v -std=c++11  -stdlib=libstdc++  -pthread
 CXXFLAGS:= -std=c++0x -Wall -c ${INCLDUES} -g
 
-all: ${OBJS} 
-	${CC} ${LDFLAGS} $^ -o raytracer
+all: $(EXECUTABLES)
 
-%.o: %.cpp
-	${CC} ${CXXFLAGS} $*.cpp
+$(EXECUTABLES): $(OBJECT_FILES)
+	@$(CC) $(LDFLAGS) -o $@ $^
+	@echo "Build Successful"
 
-tinyxml.o: tinyxml/tinyxml.cpp 
-	${CC} ${CXXFLAGS} tinyxml/tinyxml.cpp
-tinystr.o: tinyxml/tinystr.cpp 
-	${CC} ${CXXFLAGS} tinyxml/tinystr.cpp
-tinyxmlparser.o: tinyxml/tinyxmlparser.cpp
-	${CC} ${CXXFLAGS} tinyxml/tinyxmlparser.cpp
-tinyxmlerror.o: tinyxml/tinyxmlerror.cpp
-	${CC} ${CXXFLAGS} tinyxml/tinyxmlerror.cpp
+$(OBJECT_FILES): $(BIN)/%.o: %.cpp
+	@echo Compiling $<
+	@mkdir -p $(@D)
+	@$(CC) $(CXXFLAGS) -o $@ $<
 
-
-#%.o: $(wildcard tinyxml/*.cpp)
-#	${CC} ${CXXFLAGS} $< -o $@
 
 clean:
-	rm -f *.o;
-	rm raytracer
+	rm -f -r bin
