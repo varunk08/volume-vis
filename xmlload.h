@@ -5,7 +5,7 @@
 #include "objects.h"
 #include "sphere.h"
 #include "TriObj.h"
-#include "Plane.h"
+#include "plane.h"
 #include "materials.h"
 #include "lights.h"
 #include "tinyxml/tinyxml.h"

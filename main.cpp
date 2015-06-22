@@ -458,14 +458,14 @@ void StopRender()
   std::cout<<"Stop Render ..."<<std::endl;
 }
 
-void MtlBlinn::SetViewportMaterial() const{
+/*void MtlBlinn::SetViewportMaterial() const{
     ColorA c;
     c = diffuse;
     glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, &c.r );
     c = specular;
     glMaterialfv( GL_FRONT, GL_SPECULAR, &c.r );
     glMaterialf( GL_FRONT, GL_SHININESS, glossiness );
-}
+    }*/
 
 bool RayTrace(HitInfo &hitInfo, Node* curnode, Ray ray, int PixIndex)
 {
@@ -569,7 +569,7 @@ int main(int argc, char* argv[])
 
   //glutInit(&argc,argv);
   //ShowViewport();
-
+  BeginRender();
   return 0;
 }
 

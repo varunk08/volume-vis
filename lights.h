@@ -19,7 +19,7 @@
 class GenLight : public Light
 {
 protected:
-	void SetViewportParam(int lightID, ColorA ambient, ColorA intensity, Point4 pos ) const{
+  /*	void SetViewportParam(int lightID, ColorA ambient, ColorA intensity, Point4 pos ) const{
         
         glEnable ( GL_LIGHT0 + lightID );
         glLightfv( GL_LIGHT0 + lightID, GL_AMBIENT,  &ambient.r );
@@ -27,7 +27,7 @@ protected:
         glLightfv( GL_LIGHT0 + lightID, GL_SPECULAR, &intensity.r );
         glLightfv( GL_LIGHT0 + lightID, GL_POSITION, &pos.x );
         
-    };
+	};*/
 	static float Shadow(Ray ray, float t_max=BIGFLOAT);
 };
 
@@ -40,7 +40,7 @@ public:
 	virtual Color Illuminate(Point3 p) const { return intensity; }
 	virtual Point3 Direction(Point3 p) const { return Point3(0,0,0); }
 	virtual bool IsAmbient() const { return true; }
-	virtual void SetViewportLight(int lightID) const { SetViewportParam(lightID,intensity,0.0f,Point4(0,0,0,1)); }
+	//	virtual void SetViewportLight(int lightID) const { SetViewportParam(lightID,intensity,0.0f,Point4(0,0,0,1)); }
     
 	void SetIntensity(Color intens) { intensity=intens; }
 private:
@@ -55,7 +55,7 @@ public:
 	DirectLight() : intensity(0,0,0), direction(0,0,1) {}
 	virtual Color Illuminate(Point3 p) const { return Shadow(Ray(p,-direction)) * intensity; }
 	virtual Point3 Direction(Point3 p) const { return direction; }
-	virtual void SetViewportLight(int lightID) const { SetViewportParam(lightID,0.0f,intensity,Point4(-direction,0.0f)); }
+	//	virtual void SetViewportLight(int lightID) const { SetViewportParam(lightID,0.0f,intensity,Point4(-direction,0.0f)); }
     
 	void SetIntensity(Color intens) { intensity=intens; }
 	void SetDirection(Point3 dir) { direction=dir.GetNormalized(); }
@@ -72,7 +72,7 @@ public:
 	PointLight() : intensity(0,0,0), position(0,0,0) {}
 	virtual Color Illuminate(Point3 p) const { return Shadow(Ray(p,position-p),1) * intensity; }
 	virtual Point3 Direction(Point3 p) const { return (p-position).GetNormalized(); }
-	virtual void SetViewportLight(int lightID) const { SetViewportParam(lightID,0.0f,intensity,Point4(position,1.0f)); }
+	//	virtual void SetViewportLight(int lightID) const { SetViewportParam(lightID,0.0f,intensity,Point4(position,1.0f)); }
 	void SetIntensity(Color intens) { intensity=intens; }
 	void SetPosition(Point3 pos) { position=pos; }
     

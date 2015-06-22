@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string.h>
 #include <cmath>
-#include <GLUT/GLUT.h>
+//#include <GLUT/GLUT.h>
 #include "objects.h"
 #include "scene.h"
 #include "cyColor.h"
@@ -492,71 +492,7 @@ Fix specular
     return true;
   }
 bool IsInside(const Point3 &p) const { for ( int i=0; i<3; i++ ) if ( pmin[i] > p[i] || pmax[i] < p[i] ) return false; return true; }
-  void ViewportDisplay() const
-  {
-    /*        static GLUquadric *q = NULL;
-        if ( q == NULL ) q = gluNewQuadric();
-        gluSphere(q,1,50,50);
 
-    */
-    //Multi-colored side - FRONT
-    glBegin(GL_POLYGON);
- 
-    glColor3f( 1.0, 0.0, 0.0 );     glVertex3f(  1.0, -1.0, -1.0 );      // P1 is red
-    glColor3f( 0.0, 1.0, 0.0 );     glVertex3f(  1.0,  1.0, -1.0 );      // P2 is green
-    glColor3f( 0.0, 0.0, 1.0 );     glVertex3f( -1.0,  1.0, -1.0 );      // P3 is blue
-    glColor3f( 1.0, 0.0, 1.0 );     glVertex3f( -1.0, -1.0, -1.0 );      // P4 is purple
- 
-    glEnd();
- 
-    // White side - BACK
-    glBegin(GL_POLYGON);
-    glColor3f(   1.0,  1.0, 1.0 );
-    glVertex3f(  1.0, -1.0, 1.0 );
-    glVertex3f(  1.0,  1.0, 1.0 );
-    glVertex3f( -1.0,  1.0, 1.0 );
-    glVertex3f( -1.0, -1.0, 1.0 );
-    glEnd();
- 
-    // Purple side - RIGHT
-    glBegin(GL_POLYGON);
-    glColor3f(  1.0,  0.0,  1.0 );
-    glVertex3f( 1.0, -1.0, -1.0 );
-    glVertex3f( 1.0,  1.0, -1.0 );
-    glVertex3f( 1.0,  1.0,  1.0 );
-    glVertex3f( 1.0, -1.0,  1.0 );
-    glEnd();
- 
-    // Green side - LEFT
-    glBegin(GL_POLYGON);
-    glColor3f(   0.0,  1.0,  0.0 );
-    glVertex3f( -1.0, -1.0,  1.0 );
-    glVertex3f( -1.0,  1.0,  1.0 );
-    glVertex3f( -1.0,  1.0, -1.0 );
-    glVertex3f( -1.0, -1.0, -1.0 );
-    glEnd();
- 
-    // Blue side - TOP
-    glBegin(GL_POLYGON);
-    glColor3f(   0.0,  0.0,  1.0 );
-    glVertex3f(  1.0,  1.0,  1.0 );
-    glVertex3f(  1.0,  1.0, -1.0 );
-    glVertex3f( -1.0,  1.0, -1.0 );
-    glVertex3f( -1.0,  1.0,  1.0 );
-    glEnd();
- 
-    // Red side - BOTTOM
-    glBegin(GL_POLYGON);
-    glColor3f(   1.0,  0.0,  0.0 );
-    glVertex3f(  1.0, -1.0, -1.0 );
-    glVertex3f(  1.0, -1.0,  1.0 );
-    glVertex3f( -1.0, -1.0,  1.0 );
-    glVertex3f( -1.0, -1.0, -1.0 );
-    glEnd();
- 
-    glFlush();
-
-  }
 };
 extern BoxObject theBoxObject;
 #endif

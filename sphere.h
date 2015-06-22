@@ -3,7 +3,7 @@
 #include <string.h>
 #include <strings.h>
 #include <cmath>
-#include <GLUT/GLUT.h>
+//#include <GLUT/GLUT.h>
 #include "objects.h"
 
 using namespace std;
@@ -108,11 +108,11 @@ public:
     }
     
     
-    void ViewportDisplay() const
+    /*    void ViewportDisplay() const
     {
         static GLUquadric *q = NULL;
         if ( q == NULL ) q = gluNewQuadric();
         gluSphere(q,1,50,50);
-    }
+	}*/
 };
 extern Sphere theSphere;

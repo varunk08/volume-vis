@@ -10,7 +10,7 @@
 #include <string.h>
 #include <strings.h>
 #include <cmath>
-#include <GLUT/GLUT.h>
+//#include <GLUT/GLUT.h>
 
 using namespace std;
 
@@ -76,7 +76,7 @@ public:
         
     }
     
-    void ViewportDisplay() const
+    /*    void ViewportDisplay() const
     {
         const int resolution = 32;
         glPushMatrix();
@@ -97,6 +97,6 @@ public:
         glPopMatrix();
     }
     
-    
+    */
 };
 extern Plane thePlane;

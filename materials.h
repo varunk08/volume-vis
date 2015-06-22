@@ -32,7 +32,7 @@ public:
 	void SetAbsorption(Color absorp ) { absorption = absorp; }
 	void SetRefractionIndex(float _ior) { ior = _ior; }
     
-    virtual void SetViewportMaterial()const;// used for OpenGL display
+	//    virtual void SetViewportMaterial()const;// used for OpenGL display
     
      ~MtlBlinn(){};
     

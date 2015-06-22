@@ -10,7 +10,7 @@
 #include <string.h>
 #include <strings.h>
 #include <cmath>
-#include <GLUT/GLUT.h>
+//#include <GLUT/GLUT.h>
 #include "cyTriMesh.h"
 #include "cyBVH.h"
 using namespace std;
@@ -61,19 +61,6 @@ public:
         }
         return hit;
         
-    }
-    
-    void ViewportDisplay() const
-    {
-        glBegin(GL_TRIANGLES);
-        for ( unsigned int i=0; i< NF(); i++ ) {
-            for ( int j=0; j<3; j++ ) {
-                if ( HasTextureVertices() ) glTexCoord3fv( &VT( FT(i).v[j] ).x );
-                if ( HasNormals() ) glNormal3fv( &VN( FN(i).v[j] ).x );
-                glVertex3fv( &V( F(i).v[j] ).x );
-            }
-        }
-        glEnd();
     }
     
     Box GetBoundBox() const { return Box(GetBoundMin(),GetBoundMax()); }

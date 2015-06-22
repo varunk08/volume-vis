@@ -13,7 +13,7 @@
 #define _SCENE_H_INCLUDED_
 
 //-------------------------------------------------------------------------------
-
+#include<stdio.h>
 #include <string.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -246,7 +246,7 @@ class Object
 public:
 	virtual bool IntersectRay( const Ray &ray, HitInfo &hInfo, int hitSide=HIT_FRONT ) const=0;
 	virtual Box  GetBoundBox() const=0;
-	virtual void ViewportDisplay() const {}	// used for OpenGL display
+	//virtual void ViewportDisplay() const {}	// used for OpenGL display
 	virtual void SetTransform(const Matrix3 &nodeToWorld,const Matrix3 &itm, const Point3 &pos) =0;
 	//	virtual Color RayMarch(const Ray& ray, HitInfo& hInfo) const {}
 };
@@ -261,7 +261,7 @@ public:
 	virtual Color	Illuminate(Point3 p) const=0;
 	virtual Point3	Direction (Point3 p) const=0;
 	virtual bool	IsAmbient () const { return false; }
-	virtual void	SetViewportLight(int lightID) const {}	// used for OpenGL display
+	//	virtual void	SetViewportLight(int lightID) const {}	// used for OpenGL display
 };
 
 class LightList : public ItemList<Light> {};
