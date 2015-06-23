@@ -112,8 +112,8 @@ void BeginRender()
   }
   cout<<"Render Complete.\n"<<endl;
   renderImage.ComputeZBufferImage();
-  renderImage.SaveZImage("images/zbuffer.ppm");
-  renderImage.SaveImage("images/renderimage.ppm");
+  renderImage.SaveZImage("../images/zbuffer.ppm");
+  renderImage.SaveImage("../images/renderimage.ppm");
     
 }
 
@@ -533,15 +533,15 @@ int main(int argc, char* argv[])
   //  int xdim = 256,ydim=256,zdim=256; char* datafile = "data/bonsai_256x256x256.raw";
   //  int xdim = 256,ydim=256,zdim=113; char* datafile = "data/CThead_256x256x113.raw";
   //  int xdim = 256,ydim=256,zdim=178; char* datafile = "data/Teapot_256x256x178.raw";
-    int xdim = 256,ydim=256,zdim=256; char* datafile = "data/foot_8bit_256x256x256.raw";
+    int xdim = 256,ydim=256,zdim=256; char* datafile = "../data/foot_8bit_256x256x256.raw";
   //       int xdim = 128,ydim=256,zdim=256; char* datafile = "data/VisMale_128x256x256.raw";
   //         int xdim = 256,ydim=256,zdim=256; char* datafile = "data/Engine_256x256x256.raw";
 
   //const char* tf_filename = "data/engine_tf1.1dt";
-    const char* tf_filename = "data/foot_2.1dt";
+    const char* tf_filename = "../data/foot_2.1dt";
   //const char* tf_filename = "data/VisMale_128x256x256.1dt";
     //  const char* tf_filename = "data/Engine_256x256x256.1dt";
-  const char* filename = "scene.xml";
+  const char* filename = "../src/scene.xml";
   
   uchar* volumeData = NULL;
   Color* color_tf = NULL;
