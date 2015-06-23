@@ -8,10 +8,9 @@
 #include <math.h>
 #include <cmath>
 #include "cyColor.h"
-
+#include "legion.h"
 #include <unistd.h>
 #include <vector>
-#include "threadpool.h"
 #include "volumedata.h"
 #include "boxobject.h"
 
