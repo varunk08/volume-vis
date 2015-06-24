@@ -1,6 +1,4 @@
 #include "tinyxml/tinyxml.h"
-//#include <GLUT/GLUT.h>
-//#include "viewport.h"
 #include "utils.h"
 #include "scene.h"
 #include "xmlload.h"
@@ -14,17 +12,22 @@
 #include "volumedata.h"
 #include "boxobject.h"
 
-using namespace std;
+
 
 #define BIAS_SHADOW 1e-4f
 #define BIAS_SHADING 0.001f
 #define _USE_MATH_DEFINES
-#define NUM_THREADS  8
 
+using namespace std;
+using namespace LegionRuntime;
+
+enum TaskID {
+  RAY_TRACER_ID,
+};
+//globals--??!! NO GLOBALS ARE PERMITTED IN LEGION
 Camera camera;
 Node rootNode;
 RenderImage renderImage;
-
 BoxObject theBoxObject;
 Sphere theSphere;
 Plane thePlane;
@@ -519,6 +522,13 @@ bool RayTrace(HitInfo &hitInfo, Node* curnode, Ray ray, int PixIndex)
     
 }
 
+void begin_render_task(const HighLevel::Task* task,
+		       const std::vector<HighLevel::PhysicalRegion> &regions,
+		       HighLevel::Context ctx,
+		       HighLevel::HighLevelRuntime *runtime)
+{
+  BeginRender();
+}
 int main(int argc, char* argv[])
 {
   //  int xdim = 400, ydim = 296, zdim = 352; //walnut
@@ -528,18 +538,18 @@ int main(int argc, char* argv[])
   //  int xdim = 256,ydim=256,zdim=512; char* datafile = "data/Carp_256x256x512.raw";//Carp
   //  int xdim = 512, ydim=512,zdim=106; char* datafile = "data/Cadhead_512x512x106.raw";//Cad head
   //  int xdim = 256,ydim=256,zdim=109; char* datafile = "data/MRIwoman_256x256x109.raw";//MRI woman
-  //int xdim = 256,ydim=256,zdim=128; char* datafile = "data/engine_256x256x128.raw"; //Engine 8-bit
+  //  int xdim = 256,ydim=256,zdim=128; char* datafile = "data/engine_256x256x128.raw"; //Engine 8-bit
   //  int xdim = 256,ydim=256,zdim=256; char* datafile = "data/bonsai_256x256x256.raw";
   //  int xdim = 256,ydim=256,zdim=113; char* datafile = "data/CThead_256x256x113.raw";
   //  int xdim = 256,ydim=256,zdim=178; char* datafile = "data/Teapot_256x256x178.raw";
-    int xdim = 256,ydim=256,zdim=256; char* datafile = "../data/foot_8bit_256x256x256.raw";
-  //       int xdim = 128,ydim=256,zdim=256; char* datafile = "data/VisMale_128x256x256.raw";
-  //         int xdim = 256,ydim=256,zdim=256; char* datafile = "data/Engine_256x256x256.raw";
+  int xdim = 256,ydim=256,zdim=256; char* datafile = "../data/foot_8bit_256x256x256.raw";
+  //  int xdim = 128,ydim=256,zdim=256; char* datafile = "data/VisMale_128x256x256.raw";
+  //  int xdim = 256,ydim=256,zdim=256; char* datafile = "data/Engine_256x256x256.raw";
 
   //const char* tf_filename = "data/engine_tf1.1dt";
-    const char* tf_filename = "../data/foot_2.1dt";
   //const char* tf_filename = "data/VisMale_128x256x256.1dt";
-    //  const char* tf_filename = "data/Engine_256x256x256.1dt";
+  //const char* tf_filename = "data/Engine_256x256x256.1dt";
+  const char* tf_filename = "../data/foot_2.1dt";
   const char* filename = "../src/scene.xml";
   
   uchar* volumeData = NULL;
@@ -549,7 +559,9 @@ int main(int argc, char* argv[])
   int tf_size = 0;
   uchar minData, maxData;
   LoadScene(filename);
-  if(DataLoader.Load(datafile, xdim, ydim, zdim, &volumeData) && DataLoader.LoadTF(tf_filename) ){
+
+  if( DataLoader.Load(datafile, xdim, ydim, zdim, &volumeData) 
+      && DataLoader.LoadTF(tf_filename) ){
     std::cout<<"Loaded data file: "<<datafile<<std::endl;
     theBoxObject.SetDimensions(xdim, ydim, zdim);
     theBoxObject.SetData(volumeData, lights);
@@ -563,12 +575,16 @@ int main(int argc, char* argv[])
   }
   else{
     std::cout<<"Failure to load data file"<<std::endl;
-    return -1;;
+    return -1;
   }
+  HighLevel::HighLevelRuntime::set_top_level_task_id(RAY_TRACER_ID);
+  HighLevel::HighLevelRuntime::register_legion_task<begin_render_task>(RAY_TRACER_ID,
+								       HighLevel::Processor::LOC_PROC,
+							    true,
+							    false);
+  //  BeginRender();
 
-  //glutInit(&argc,argv);
-  //ShowViewport();
-  BeginRender();
-  return 0;
+
+  return   HighLevel::HighLevelRuntime::start(argc, argv);
 }
 
